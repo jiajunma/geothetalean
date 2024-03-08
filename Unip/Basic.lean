@@ -29,6 +29,16 @@ def transpose (a : Multiset ℕ) : Multiset ℕ:=
 def isTypeBD (a: Multiset ℕ) : Bool :=
   a.all (fun r => r == 0 || r % 2 == 1 || Multiset.count r a %2 ==0)
 
+lemma isTypeBD_iff (a: Multiset ℕ) : isTypeBD a = true ↔ ∀ i ∈ a, i≠0 ∧ (i%2=0)-> Multiset.count i a %2 =0 :=by
+  rw [isTypeBD,all_iff]
+  apply iff_of_eq
+  apply forall_congr
+  intro i
+  congr
+  simp only [Bool.or_eq_true, beq_iff_eq, ne_eq, and_imp, eq_iff_iff]
+  simp only [or_assoc, imp_iff_not_or, not_not]
+  rw [or_congr_right]
+
 
 def isTypeC (a: Multiset ℕ) : Bool :=
   a.all (fun r => r % 2 ==0 || Multiset.count r a % 2 ==0)
