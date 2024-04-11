@@ -2,6 +2,7 @@ import Mathlib.Data.List.Range
 import Mathlib.Data.Multiset.Range
 import Mathlib.Data.Multiset.Lattice
 import Mathlib.Data.Multiset.Sort
+import Mathlib.Data.Nat.Parity
 
 import Unip.Auxi
 
@@ -35,10 +36,20 @@ lemma isTypeBD_iff (a: Multiset ℕ) : isTypeBD a = true ↔ ∀ i ∈ a, i≠0 
   apply forall_congr
   intro i
   congr
-  simp only [Bool.or_eq_true, beq_iff_eq, ne_eq, and_imp, eq_iff_iff]
-  simp only [or_assoc, imp_iff_not_or, not_not]
-  rw [or_congr_right]
-
+  rw [Bool.or_eq_true, beq_iff_eq, ne_eq, and_imp, eq_iff_iff]
+  constructor
+  . intro h hi1 hi2
+    simp only [hi2, Nat.reduceBEq, Bool.or_false, beq_iff_eq, hi1, false_or] at h
+    rw [h]
+  . intro h
+    repeat rw [imp_iff_not_or] at h
+    push_neg at h
+    have : (i==0 || i%2==1) = true ↔ i=0 ∨ i%2 ≠ 0 := by
+      rw [Bool.or_eq_true, beq_iff_eq, ne_eq]
+      rw [or_congr_right]
+      rw [beq_iff_eq, Nat.mod_two_ne_zero]
+    rw [this,or_assoc]
+    exact h
 
 def isTypeC (a: Multiset ℕ) : Bool :=
   a.all (fun r => r % 2 ==0 || Multiset.count r a % 2 ==0)

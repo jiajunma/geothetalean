@@ -1,5 +1,5 @@
 import Mathlib.Data.Multiset.Sort
-import Mathlib.Data.Nat.Basic
+import Init.Data.Nat.Basic
 import Mathlib.Data.Multiset.Fold
 
 open Decidable Multiset
