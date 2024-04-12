@@ -3,6 +3,11 @@ import Mathlib.Data.Multiset.Range
 import Mathlib.Data.Multiset.Lattice
 import Mathlib.Data.Multiset.Sort
 import Mathlib.Data.Nat.Parity
+import Mathlib.Data.Multiset.Nodup
+import Mathlib.Data.Multiset.Basic
+import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Finset.Card
+
 
 import Unip.Auxi
 
@@ -55,9 +60,58 @@ def isTypeC (a: Multiset ℕ) : Bool :=
   a.all (fun r => r % 2 ==0 || Multiset.count r a % 2 ==0)
 
 
+
+
+
+
+structure MarkedPartition where
+  nu : Finset ℕ
+  lam : Multiset ℕ
+  nonzero: 0 ∉ lam
+
+namespace MarkedPartition
+
+abbrev mu (p : MarkedPartition) : Multiset ℕ := p.lam  - p.nu.val
+
+end MarkedPartition
+
+structure MarkedPartitionBD extends MarkedPartition where
+  typeBD : isTypeBD lam
+  nuodd  : nu.val.all (fun r => Odd r)
+  nucardeven : Even nu.card
+
+structure MarkedPartitionC extends MarkedPartition where
+  typeC : isTypeC lam
+  nuodd  : nu.val.all (fun r => Even r)
+
+
+section test
+
 #eval {1,1,2,2,3,3,3} |> isTypeBD
 
 #eval {1,1,2,2,3,3,1,0} |> isTypeBD
 
 
 #eval {1,1,2,2,4,6,8,3,3} |> isTypeC
+
+def p : MarkedPartition := ⟨{5,3},{5,5,3,3,4,2}, by decide⟩
+
+def q : MarkedPartitionBD where
+  nu := {3,1}
+  lam := {3,3,3,4,4,4,4,2,2,1,1}
+  nonzero := by decide
+  typeBD := by
+    simp only [isTypeBD,all,all_aux]
+    decide
+  nuodd := by
+    simp; decide
+  nucardeven := by decide
+
+
+
+#eval p.lam
+
+
+
+
+end test
