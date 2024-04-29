@@ -28,15 +28,20 @@ open Multiset
 -/
 def haspair (f : α → α) (A: Finset α) : Prop := ∃ (i:α), i ∈ A ∧ f i ∈ A
 
+@[simp]
 def haspair' [DecidableEq α] (f : α → α) (A: Finset α) : Bool := A.filter (λ i => f i ∈ A) ≠ ∅
 
-
+@[simp]
+lemma haspair'_iff {α} [DecidableEq α] (f : α → α) (A: Finset α) : haspair f A  ↔  haspair' f A = true := by
+  sorry
 
 structure SkippingSymbol' where
   A : Finset ℕ
   B : Finset PNat
-  non_adjA : ∀ i, ¬  {i,i+1} ⊆ A
-  non_adjB : ∀ i, ¬  {i,i+1} ⊆ B
+  non_adjA : ¬ haspair' (· + 1) A
+  non_adjB : ¬ haspair' (· + 1) B
+  --non_adjA : ∀ i, ¬  {i,i+1} ⊆ A
+  --non_adjB : ∀ i, ¬  {i,i+1} ⊆ B
   cardodd : Odd (A.card + B.card)
 
 
@@ -57,10 +62,24 @@ The rank of a Symbol is given by
 -/
 namespace SkippingSymbol'
 
+instance Nat.le.decidable : DecidableRel (· ≤ · : ℕ → ℕ → Prop) := inferInstance
+
+
+instance PNat.le.decidable : DecidableRel (· ≤ · : PNat → PNat → Prop) := inferInstance
+
+
+instance FinsetNat.repr : Repr (Finset ℕ) where
+  reprPrec s _ :=
+      Std.Format.joinSep (s.sort (· ≤ ·)) ", "
+
+instance FinsetPNat.repr : Repr (Finset PNat) where
+  reprPrec s _ :=
+      Std.Format.joinSep ((s.sort (· ≤ ·)).map Subtype.val) ", "
+      --Std.Format.join ["{", Std.Format.joinSep ((s.sort (· ≤ ·)).map  repr) ", ", "}"]
 
 unsafe instance  reprSkippingSymbol' : Repr SkippingSymbol' where
   reprPrec s _ :=
-      Std.Format.join ["(", repr s.A, ",", repr s.B, ")"]
+      Std.Format.join ["(", repr s.A, ";", repr s.B, ")"]
 
 def size (S : SkippingSymbol') : ℕ := S.A.card + S.B.card
 
@@ -113,13 +132,30 @@ def defect: SkippingSymbol → ℤ := Quot.lift SkippingSymbol'.defect (by intro
 
 end SkippingSymbol
 
+
+section bipartition
+
+structure Bipartition where
+  A : Finset PNat
+  B : Finset PNat
+
+namespace Bipartition
+
+def rank (S : Bipartition) : ℕ := ∑ a in S.A, (a:ℕ) + ∑ b in S.B, (b:ℕ)
+
+
+
+end Bipartition
+
+end bipartition
+
 section test
 
 def s1' : SkippingSymbol' where
-   A := {0, 1,3,7}
-   B := {2,4,9}
-   non_adjA := by sorry
-   non_adjB := by sorry
+   A := {0, 2,4,7,21}
+   B := {2,4,9,12}
+   non_adjA := by decide
+   non_adjB := by decide
    cardodd := by decide
 
 def s1 : SkippingSymbol := Quot.mk _ s1'
