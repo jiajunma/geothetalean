@@ -149,7 +149,41 @@ instance  reprBipartition' : Repr Bipartition' where
   reprPrec s _ :=
       Std.Format.join ["{", repr s.A, ";", repr s.B, "}"]
 
+@[simp]
+def pos (A : Multiset ℕ) : Multiset ℕ := A.filter (0 < ·)
+
+@[simp]
+def upto_zero (S1 S2 : Bipartition') : Prop :=
+  pos S1.A = pos S2.A ∧ pos S1.B = pos S2.B
+
+
+def remove_zero (S : Bipartition') : Bipartition' where
+  A := pos S.A
+  B := pos S.B
+
+
 end Bipartition'
+
+def Bipartition := Quot Bipartition'.upto_zero
+
+namespace Bipartition
+
+def rank : Bipartition → ℕ:= Quot.lift Bipartition'.rank (by sorry)
+
+def toBP' : Bipartition →  Bipartition' :=
+  Quot.lift Bipartition'.remove_zero (by
+  intro S1 S2 h
+  rcases h with ⟨h1, h2⟩
+  simp_rw [Bipartition'.remove_zero,h1,h2]
+  )
+
+
+instance  reprBipartition: Repr Bipartition where
+  reprPrec s _ :=
+      repr s.toBP'
+
+end Bipartition
+
 
 
 def SkippingSymbol'.to_aux (sofar rest: List ℕ) (n : ℕ): List ℕ :=
@@ -157,9 +191,12 @@ def SkippingSymbol'.to_aux (sofar rest: List ℕ) (n : ℕ): List ℕ :=
   | sofar, [], _ => sofar
   | sofar, h::t, n => SkippingSymbol'.to_aux (sofar ++ [h-n]) t (n+2)
 
-def SkippingSymbol'.toBP (S : SkippingSymbol') : Bipartition' where
+def SkippingSymbol'.toBP' (S : SkippingSymbol') : Bipartition' where
   A := SkippingSymbol'.to_aux [] (S.A.sort (· ≤ ·)) 0
   B := SkippingSymbol'.to_aux [] (S.B.sort (· ≤ ·)) 1
+
+
+def SkippingSymbol'.toBP (S : SkippingSymbol') : Bipartition := Quot.mk _ (S.toBP')
 
 end bipartition
 
@@ -191,6 +228,7 @@ def s1 : SkippingSymbol := Quot.mk _ s1'
 #eval s1'.defect
 #eval s1'.shift_right.defect
 
+#eval s1'.toBP'
 #eval s1'.toBP
 
 end test
