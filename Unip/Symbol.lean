@@ -37,12 +37,13 @@ lemma haspair'_iff {α} [DecidableEq α] (f : α → α) (A: Finset α) : haspai
 
 structure SkippingSymbol' where
   A : Finset ℕ
-  B : Finset PNat
+  B : Finset ℕ
   non_adjA : ¬ haspair' (· + 1) A
   non_adjB : ¬ haspair' (· + 1) B
   --non_adjA : ∀ i, ¬  {i,i+1} ⊆ A
   --non_adjB : ∀ i, ¬  {i,i+1} ⊆ B
   cardodd : Odd (A.card + B.card)
+  nonzeroB: 0 ∉ B
 
 
 
@@ -68,18 +69,20 @@ instance Nat.le.decidable : DecidableRel (· ≤ · : ℕ → ℕ → Prop) := i
 instance PNat.le.decidable : DecidableRel (· ≤ · : PNat → PNat → Prop) := inferInstance
 
 
-instance FinsetNat.repr : Repr (Finset ℕ) where
+instance FinsetNat.repr : Repr (Multiset ℕ) where
   reprPrec s _ :=
       Std.Format.joinSep (s.sort (· ≤ ·)) ", "
 
-instance FinsetPNat.repr : Repr (Finset PNat) where
+/-
+instance FinsetPNat.repr : Repr (Multiset PNat) where
   reprPrec s _ :=
       Std.Format.joinSep ((s.sort (· ≤ ·)).map Subtype.val) ", "
       --Std.Format.join ["{", Std.Format.joinSep ((s.sort (· ≤ ·)).map  repr) ", ", "}"]
+-/
 
-unsafe instance  reprSkippingSymbol' : Repr SkippingSymbol' where
+instance  reprSkippingSymbol' : Repr SkippingSymbol' where
   reprPrec s _ :=
-      Std.Format.join ["(", repr s.A, ";", repr s.B, ")"]
+      Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
 
 def size (S : SkippingSymbol') : ℕ := S.A.card + S.B.card
 
@@ -90,20 +93,17 @@ lemma rank_def (S : SkippingSymbol') :  ∑ a in S.A, (a:ℕ) + ∑ b in S.B, (b
 
 def defect (S : SkippingSymbol') : ℤ :=  S.A.card - S.B.card
 
-lemma _root_.PNat.add_inj (a : Nat) :
-  Function.Injective <| fun x : PNat => (x+n:PNat) := by
-  intro _ _ _; aesop
-
 lemma _root_.Nat.add_inj (a : ℕ) :
   Function.Injective <| fun x : ℕ => x+n := by
   intro _ _ _; aesop
 
 def shift_right (S : SkippingSymbol') : SkippingSymbol' where
   A := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩  S.A
-  B := {1} ∪ Finset.map ⟨(· + 2), PNat.add_inj 2⟩ S.B
+  B := {1} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ S.B
   non_adjA := sorry
   non_adjB := sorry
   cardodd := sorry
+  nonzeroB := sorry
 
 abbrev equiv (S1 S2 : SkippingSymbol') : Prop :=
   S1 = shift_right S2
@@ -135,17 +135,31 @@ end SkippingSymbol
 
 section bipartition
 
-structure Bipartition where
-  A : Finset PNat
-  B : Finset PNat
+structure Bipartition' where
+  A : Multiset Nat
+  B : Multiset Nat
 
-namespace Bipartition
+namespace Bipartition'
 
-def rank (S : Bipartition) : ℕ := ∑ a in S.A, (a:ℕ) + ∑ b in S.B, (b:ℕ)
+def rank (S : Bipartition') : ℕ := S.A.sum + S.B.sum
 
 
 
-end Bipartition
+instance  reprBipartition' : Repr Bipartition' where
+  reprPrec s _ :=
+      Std.Format.join ["{", repr s.A, ";", repr s.B, "}"]
+
+end Bipartition'
+
+
+def SkippingSymbol'.to_aux (sofar rest: List ℕ) (n : ℕ): List ℕ :=
+  match sofar, rest, n with
+  | sofar, [], _ => sofar
+  | sofar, h::t, n => SkippingSymbol'.to_aux (sofar ++ [h-n]) t (n+2)
+
+def SkippingSymbol'.toBP (S : SkippingSymbol') : Bipartition' where
+  A := SkippingSymbol'.to_aux [] (S.A.sort (· ≤ ·)) 0
+  B := SkippingSymbol'.to_aux [] (S.B.sort (· ≤ ·)) 1
 
 end bipartition
 
@@ -157,8 +171,10 @@ def s1' : SkippingSymbol' where
    non_adjA := by decide
    non_adjB := by decide
    cardodd := by decide
+   nonzeroB := by decide
 
 def s1 : SkippingSymbol := Quot.mk _ s1'
+
 
 
 #eval s1'
@@ -175,5 +191,6 @@ def s1 : SkippingSymbol := Quot.mk _ s1'
 #eval s1'.defect
 #eval s1'.shift_right.defect
 
+#eval s1'.toBP
 
 end test
