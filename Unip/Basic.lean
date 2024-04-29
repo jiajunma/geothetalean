@@ -150,6 +150,4 @@ def q : MarkedPartitionBD where
 #eval q
 
 
-
-
 end test
