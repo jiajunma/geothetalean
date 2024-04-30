@@ -46,6 +46,7 @@ structure SkippingSymbol' where
 
 
 
+
 /-Triagle_number is the number of * in the following diagram of (n-1 rows)
   * * ... *
   * * ..*
@@ -83,12 +84,6 @@ instance  reprSkippingSymbol' : Repr SkippingSymbol' where
       Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
 
 
-structure ReducedSkippingSymbol extends SkippingSymbol' where
-  reduced: ¬ (0 ∈ A  && 1 ∈ B)
-
-instance  reprReducedSkippingSymbol : Repr ReducedSkippingSymbol where
-  reprPrec s _ := repr s.toSkippingSymbol'
-
 
 def size (S : SkippingSymbol') : ℕ := S.A.card + S.B.card
 
@@ -123,6 +118,15 @@ def defect_shift (S : SkippingSymbol') :  (shift_right S).defect = S.defect:= by
   sorry
 
 
+end SkippingSymbol'
+
+structure ReducedSkippingSymbol extends SkippingSymbol' where
+  reduced: ¬ (0 ∈ A  && 1 ∈ B)
+
+instance  reprReducedSkippingSymbol : Repr ReducedSkippingSymbol where
+  reprPrec s _ := repr s.toSkippingSymbol'
+
+namespace SkippingSymbol'
 
 def shift_left (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : SkippingSymbol' where
   A := Finset.image (· - 2) (S.A.erase 0)
@@ -243,6 +247,15 @@ def s1' : SkippingSymbol' where
    cardodd := by decide
    nonzeroB := by decide
 
+
+def s2' : SkippingSymbol' where
+   A := {0, 2,4,6,8,21,24}
+   B := {1, 3,5,7,9,12}
+   non_adjA := by decide
+   non_adjB := by decide
+   cardodd := by decide
+   nonzeroB := by decide
+
 def s1'' : ReducedSkippingSymbol := ⟨s1', by decide⟩
 
 def s1 : SkippingSymbol := Quot.mk _ s1'
@@ -269,5 +282,8 @@ def s1 : SkippingSymbol := Quot.mk _ s1'
 
 #eval s1'.toBP'
 #eval s1'.toBP
+
+#eval s2'
+#eval s2'.toReduced
 
 end test
