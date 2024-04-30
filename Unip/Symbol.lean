@@ -11,6 +11,7 @@ import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Sort
 import Mathlib.Data.PNat.Basic
 import Mathlib.Algebra.BigOperators.Basic
+import Mathlib.Tactic.Linarith.Frontend
 
 import Unip.Auxi
 
@@ -214,40 +215,27 @@ match n with
 
 --#eval add_zero 3 {1,2,3}
 
-def to_ssymbol_aux (n : ℕ) (sofar res: List ℕ) : List ℕ
-  := match n, res with
-  | _, [] => sofar
-  | _, h::tail => to_ssymbol_aux (n+2) (sofar ++ [h+n]) tail
+def to_ssymbol_aux (init : ℕ) (S : List ℕ) : List ℕ
+:= S.enum.map (fun (i, x) => x + i * 2 + init)
 
-lemma to_ssymbol_aux_cone (n hd: ℕ) (sofar L: List ℕ) : (to_ssymbol_aux n sofar (hd::L)) =
-  sofar ++ [hd+n] ++ to_ssymbol_aux (n+2) [] L:= by
-  induction' L with h t ih generalizing sofar n hd
-  . simp [to_ssymbol_aux]
-  . rw [to_ssymbol_aux]
-    have := ih  (n+2) h (sofar ++ [hd+n])
-    simp [this,ih (n+2) h []]
-
-
-
-lemma to_ssymbol_aux_lt (n : ℕ) (sofar : List ℕ) (S: Multiset ℕ ) (hpair: sofar.Pairwise Nat.lt) (hsofar : ∀ x ∈ sofar, ∀  y ∈ S, x < y+n) : (to_ssymbol_aux n sofar (S.sort (· ≤ ·))).Pairwise Nat.lt:= by
-  set L := S.sort (· ≤ ·)
-  induction' L with h t ih  generalizing n sofar
-  . simp [to_ssymbol_aux,hpair]
-  . rw [to_ssymbol_aux_cone]
-    sorry
-
-lemma to_ssymbol_aux_nodup (n : ℕ) (S: Multiset ℕ ) : (to_ssymbol_aux n [] (S.sort (· ≤ ·))).Nodup := by sorry
-
-
-def to_ssymbol (init : ℕ) (S : Multiset ℕ) : Finset ℕ
-where
- val := (to_ssymbol_aux init [] (S.sort (· ≤ ·)))
- nodup := to_ssymbol_aux_nodup init S
+def to_ssymbol (init : ℕ) (S : Multiset ℕ) : Finset ℕ where
+ val := (S.sort (· ≤ ·)).enum.map (fun (i, x) => x + i * 2 + init)
+ nodup := by
+  set L:= S.sort (· ≤ ·)
+  apply List.nodup_iff_get?_ne_get?.2
+  intro i j hij hj
+  replace hj : j<L.length := by aesop
+  have hi : i < L.length := by linarith
+  have hh : L.get ⟨i,hi⟩  ≤ L.get ⟨j,hj⟩ := by
+    have : L.Sorted (· ≤ ·) :=
+      Multiset.sort_sorted (· ≤ ·) S
+    exact List.Sorted.rel_get_of_lt  this hij
+  simp [List.get?_map,List.get?_eq_get hi,List.get?_eq_get hj]
+  linarith
 
 lemma card_to_ssymbol (init : ℕ) (S : Multiset ℕ) : (to_ssymbol init S).card = Multiset.card S:= by
-  sorry
+  simp [to_ssymbol]
 
-#eval to_ssymbol_aux 0 [] [0,0,3,4,5]
 
 def toSkippingSymbol' (P : Bipartition') : SkippingSymbol' :=
   by
