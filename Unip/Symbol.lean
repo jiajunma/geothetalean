@@ -151,15 +151,22 @@ decreasing_by
 
 end SkippingSymbol'
 
-
 def SkippingSymbol := Quot SkippingSymbol'.equiv
 
+def SkippingSymbol'.toSymbol (S : SkippingSymbol') : SkippingSymbol := Quot.mk SkippingSymbol'.equiv S
+
 namespace SkippingSymbol
+
+instance  coe: Coe SkippingSymbol' SkippingSymbol where
+  coe := SkippingSymbol'.toSymbol
+
 open SkippingSymbol'
 
-unsafe instance  reprSkippingSymbol : Repr SkippingSymbol where
+def toReduced : SkippingSymbol →  ReducedSkippingSymbol := Quot.lift (fun S => S.toReduced) (by sorry)
+
+instance  reprSkippingSymbol : Repr SkippingSymbol where
   reprPrec s _ :=
-      repr s.unquot
+      repr s.toReduced
 
 
 def rank : SkippingSymbol → ℕ:= Quot.lift SkippingSymbol'.rank (by intro _ _ h; rw[h,rank_shift])
@@ -167,10 +174,12 @@ def rank : SkippingSymbol → ℕ:= Quot.lift SkippingSymbol'.rank (by intro _ _
 
 def defect: SkippingSymbol → ℤ := Quot.lift SkippingSymbol'.defect (by intro _ _ h; rw [h,defect_shift])
 
+
+
 end SkippingSymbol
 
 
-section bipartition
+section Bipartition
 
 structure Bipartition' where
   A : Multiset Nat
@@ -223,19 +232,19 @@ end Bipartition
 
 
 
-def SkippingSymbol'.to_aux (sofar rest: List ℕ) (n : ℕ): List ℕ :=
+def SkippingSymbol'.toBP'_aux (sofar rest: List ℕ) (n : ℕ): List ℕ :=
   match sofar, rest, n with
   | sofar, [], _ => sofar
-  | sofar, h::t, n => SkippingSymbol'.to_aux (sofar ++ [h-n]) t (n+2)
+  | sofar, h::t, n => SkippingSymbol'.toBP'_aux (sofar ++ [h-n]) t (n+2)
 
 def SkippingSymbol'.toBP' (S : SkippingSymbol') : Bipartition' where
-  A := SkippingSymbol'.to_aux [] (S.A.sort (· ≤ ·)) 0
-  B := SkippingSymbol'.to_aux [] (S.B.sort (· ≤ ·)) 1
+  A := SkippingSymbol'.toBP'_aux [] (S.A.sort (· ≤ ·)) 0
+  B := SkippingSymbol'.toBP'_aux [] (S.B.sort (· ≤ ·)) 1
 
 
 def SkippingSymbol'.toBP (S : SkippingSymbol') : Bipartition := Quot.mk _ (S.toBP')
 
-end bipartition
+end Bipartition
 
 section test
 
@@ -260,6 +269,7 @@ def s1'' : ReducedSkippingSymbol := ⟨s1', by decide⟩
 
 def s1 : SkippingSymbol := Quot.mk _ s1'
 
+def s2 : SkippingSymbol := Quot.mk _ s2'
 
 
 
@@ -267,13 +277,17 @@ def s1 : SkippingSymbol := Quot.mk _ s1'
 #eval s1
 #eval s1'.size
 
+
+
 #eval s1''.rank
 #eval s1''
 
 #eval s1.rank
 #eval s1.defect
 
-#eval s1'.shift_right
+
+#eval s1'.shift_right.shift_right
+#eval (s1'.shift_right.shift_right.shift_right.toSymbol : SkippingSymbol)
 
 #eval s1'.shift_right.rank
 
@@ -285,5 +299,6 @@ def s1 : SkippingSymbol := Quot.mk _ s1'
 
 #eval s2'
 #eval s2'.toReduced
+#eval s2
 
 end test
