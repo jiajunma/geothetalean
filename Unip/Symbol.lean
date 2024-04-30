@@ -121,14 +121,14 @@ def defect_shift (S : SkippingSymbol') :  (shift_right S).defect = S.defect:= by
 end SkippingSymbol'
 
 structure ReducedSkippingSymbol extends SkippingSymbol' where
-  reduced: ¬ (0 ∈ A  && 1 ∈ B)
+  reduced: ¬ (0 ∈ A  ∧ 1 ∈ B)
 
 instance  reprReducedSkippingSymbol : Repr ReducedSkippingSymbol where
   reprPrec s _ := repr s.toSkippingSymbol'
 
 namespace SkippingSymbol'
 
-def shift_left (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : SkippingSymbol' where
+def shift_left (S : SkippingSymbol') (h : 0∈ S.A ∧ 1∈ S.B) : SkippingSymbol' where
   A := Finset.image (· - 2) (S.A.erase 0)
   B := Finset.image (· - 2) (S.B.erase 1)
   non_adjA := sorry
@@ -137,14 +137,14 @@ def shift_left (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : SkippingSymbol
   nonzeroB := sorry
 
 
-lemma shift_left_size (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : (shift_left S h).size = S.size - 2 := by
+lemma shift_left_size (S : SkippingSymbol') (h : 0∈ S.A ∧ 1∈ S.B) : (shift_left S h).size = S.size - 2 := by
   sorry
 
-lemma shift_left_size_le (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : (shift_left S h).size < S.size  := by
+lemma shift_left_size_le (S : SkippingSymbol') (h : 0∈ S.A ∧ 1∈ S.B) : (shift_left S h).size < S.size  := by
   sorry
 
 
-def toReduced (S : SkippingSymbol') : ReducedSkippingSymbol := if h : 0 ∈ S.A && 1 ∈ S.B then toReduced (shift_left S h)  else ⟨S, h⟩
+def toReduced (S : SkippingSymbol') : ReducedSkippingSymbol := if h : 0 ∈ S.A ∧  1 ∈ S.B then toReduced (shift_left S h)  else ⟨S, h⟩
 termination_by S.size
 decreasing_by
   exact shift_left_size_le S h
