@@ -40,8 +40,6 @@ structure SkippingSymbol' where
   B : Finset ℕ
   non_adjA : ¬ haspair' (· + 1) A
   non_adjB : ¬ haspair' (· + 1) B
-  --non_adjA : ∀ i, ¬  {i,i+1} ⊆ A
-  --non_adjB : ∀ i, ¬  {i,i+1} ⊆ B
   cardodd : Odd (A.card + B.card)
   nonzeroB: 0 ∉ B
 
@@ -84,6 +82,14 @@ instance  reprSkippingSymbol' : Repr SkippingSymbol' where
   reprPrec s _ :=
       Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
 
+
+structure ReducedSkippingSymbol extends SkippingSymbol' where
+  reduced: ¬ (0 ∈ A  && 1 ∈ B)
+
+instance  reprReducedSkippingSymbol : Repr ReducedSkippingSymbol where
+  reprPrec s _ := repr s.toSkippingSymbol'
+
+
 def size (S : SkippingSymbol') : ℕ := S.A.card + S.B.card
 
 def rank (S : SkippingSymbol') : ℕ  :=
@@ -97,8 +103,10 @@ lemma _root_.Nat.add_inj (a : ℕ) :
   Function.Injective <| fun x : ℕ => x+n := by
   intro _ _ _; aesop
 
+
+
 def shift_right (S : SkippingSymbol') : SkippingSymbol' where
-  A := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩  S.A
+  A := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ S.A
   B := {1} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ S.B
   non_adjA := sorry
   non_adjB := sorry
@@ -111,9 +119,34 @@ abbrev equiv (S1 S2 : SkippingSymbol') : Prop :=
 def rank_shift (S : SkippingSymbol') :  (shift_right S).rank = S.rank:= sorry
 
 
-def defect_shift (S : SkippingSymbol') :  (shift_right S).defect = S.defect:= sorry
+def defect_shift (S : SkippingSymbol') :  (shift_right S).defect = S.defect:= by
+  sorry
+
+
+
+def shift_left (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : SkippingSymbol' where
+  A := Finset.image (· - 2) (S.A.erase 0)
+  B := Finset.image (· - 2) (S.B.erase 1)
+  non_adjA := sorry
+  non_adjB := sorry
+  cardodd := sorry
+  nonzeroB := sorry
+
+
+lemma shift_left_size (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : (shift_left S h).size = S.size - 2 := by
+  sorry
+
+lemma shift_left_size_le (S : SkippingSymbol') (h : 0∈ S.A && 1∈ S.B) : (shift_left S h).size < S.size  := by
+  sorry
+
+
+def toReduced (S : SkippingSymbol') : ReducedSkippingSymbol := if h : 0 ∈ S.A && 1 ∈ S.B then toReduced (shift_left S h)  else ⟨S, h⟩
+termination_by S.size
+decreasing_by
+  exact shift_left_size_le S h
 
 end SkippingSymbol'
+
 
 def SkippingSymbol := Quot SkippingSymbol'.equiv
 
@@ -210,13 +243,19 @@ def s1' : SkippingSymbol' where
    cardodd := by decide
    nonzeroB := by decide
 
+def s1'' : ReducedSkippingSymbol := ⟨s1', by decide⟩
+
 def s1 : SkippingSymbol := Quot.mk _ s1'
+
 
 
 
 #eval s1'
 #eval s1
 #eval s1'.size
+
+#eval s1''.rank
+#eval s1''
 
 #eval s1.rank
 #eval s1.defect
