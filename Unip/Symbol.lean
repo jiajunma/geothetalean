@@ -207,6 +207,63 @@ def remove_zero (S : Bipartition') : Bipartition' where
   A := pos S.A
   B := pos S.B
 
+def add_zero (n:ℕ) (S : Multiset ℕ) : Multiset ℕ :=
+match n with
+  | 0 => S
+  | n+1 => add_zero n (insert 0 S)
+
+--#eval add_zero 3 {1,2,3}
+
+def to_ssymbol_aux (n : ℕ) (sofar res: List ℕ) : List ℕ
+  := match n, res with
+  | _, [] => sofar
+  | _, h::tail => to_ssymbol_aux (n+2) (sofar ++ [h+n]) tail
+
+lemma to_ssymbol_aux_cone (n hd: ℕ) (sofar L: List ℕ) : (to_ssymbol_aux n sofar (hd::L)) =
+  sofar ++ [hd+n] ++ to_ssymbol_aux (n+2) [] L:= by
+  induction' L with h t ih generalizing sofar n hd
+  . simp [to_ssymbol_aux]
+  . rw [to_ssymbol_aux]
+    have := ih  (n+2) h (sofar ++ [hd+n])
+    simp [this,ih (n+2) h []]
+
+
+
+lemma to_ssymbol_aux_lt (n : ℕ) (sofar : List ℕ) (S: Multiset ℕ ) (hpair: sofar.Pairwise Nat.lt) (hsofar : ∀ x ∈ sofar, ∀  y ∈ S, x < y+n) : (to_ssymbol_aux n sofar (S.sort (· ≤ ·))).Pairwise Nat.lt:= by
+  set L := S.sort (· ≤ ·)
+  induction' L with h t ih  generalizing n sofar
+  . simp [to_ssymbol_aux,hpair]
+  . rw [to_ssymbol_aux_cone]
+    sorry
+
+lemma to_ssymbol_aux_nodup (n : ℕ) (S: Multiset ℕ ) : (to_ssymbol_aux n [] (S.sort (· ≤ ·))).Nodup := by sorry
+
+
+def to_ssymbol (init : ℕ) (S : Multiset ℕ) : Finset ℕ
+where
+ val := (to_ssymbol_aux init [] (S.sort (· ≤ ·)))
+ nodup := to_ssymbol_aux_nodup init S
+
+lemma card_to_ssymbol (init : ℕ) (S : Multiset ℕ) : (to_ssymbol init S).card = Multiset.card S:= by
+  sorry
+
+#eval to_ssymbol_aux 0 [] [0,0,3,4,5]
+
+def toSkippingSymbol' (P : Bipartition') : SkippingSymbol' :=
+  by
+    let a := Multiset.card P.A
+    let b := Multiset.card P.B
+    exact
+      if h : b<a
+      then ⟨to_ssymbol 0 P.A, to_ssymbol 1 (add_zero (a-b-1) P.B), sorry, sorry, sorry, sorry⟩
+      else ⟨to_ssymbol 0 (add_zero (b-a+1) P.A), to_ssymbol 1 P.B, sorry, sorry, sorry, sorry⟩
+
+
+#eval (toSkippingSymbol' ⟨{0,0,1,3,7,7},{0,0,0,3,3,4}⟩:SkippingSymbol)
+
+
+#eval (toSkippingSymbol' ⟨{1,3,7,7},{0,0,0,3,3,4}⟩:SkippingSymbol)
+
 
 end Bipartition'
 
