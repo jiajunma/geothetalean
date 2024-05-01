@@ -64,7 +64,7 @@ structure Partition where
   lam :Multiset ℕ
   nonzero : 0 ∉ lam
 
-instance partition.coe : CoeOut (Partitoin) (Multiset ℕ) where
+instance partition.coe : Coe (Partition) (Multiset ℕ) where
   coe := fun p => p.lam
 
 

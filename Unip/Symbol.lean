@@ -36,9 +36,32 @@ def haspair' [DecidableEq α] (f : α → α) (A: Finset α) : Bool := A.filter 
 lemma haspair'_iff {α} [DecidableEq α] (f : α → α) (A: Finset α) : haspair f A  ↔  haspair' f A = true := by
   sorry
 
-structure SkippingSymbol' where
+
+instance Nat.le.decidable : DecidableRel (· ≤ · : ℕ → ℕ → Prop) := inferInstance
+
+
+instance PNat.le.decidable : DecidableRel (· ≤ · : PNat → PNat → Prop) := inferInstance
+
+
+instance MultisetNat.repr : Repr (Multiset ℕ) where
+  reprPrec s _ :=
+      Std.Format.joinSep (s.sort (· ≤ ·)) ", "
+
+instance FinsetNat.repr : Repr (Finset ℕ) where
+  reprPrec s _ :=
+      Std.Format.joinSep (s.sort (· ≤ ·)) ", "
+
+
+structure Symbol' where
   A : Finset ℕ
   B : Finset ℕ
+
+instance  Symbol'.reprSymbol' : Repr Symbol' where
+  reprPrec s _ :=
+      Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
+
+
+structure SkippingSymbol' extends Symbol' where
   non_adjA : ¬ haspair' (· + 1) A
   non_adjB : ¬ haspair' (· + 1) B
   cardodd : Odd (A.card + B.card)
@@ -63,15 +86,6 @@ The rank of a Symbol is given by
 -/
 namespace SkippingSymbol'
 
-instance Nat.le.decidable : DecidableRel (· ≤ · : ℕ → ℕ → Prop) := inferInstance
-
-
-instance PNat.le.decidable : DecidableRel (· ≤ · : PNat → PNat → Prop) := inferInstance
-
-
-instance FinsetNat.repr : Repr (Multiset ℕ) where
-  reprPrec s _ :=
-      Std.Format.joinSep (s.sort (· ≤ ·)) ", "
 
 /-
 instance FinsetPNat.repr : Repr (Multiset PNat) where
@@ -81,8 +95,8 @@ instance FinsetPNat.repr : Repr (Multiset PNat) where
 -/
 
 instance  reprSkippingSymbol' : Repr SkippingSymbol' where
-  reprPrec s _ :=
-      Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
+  reprPrec s _ := repr s.toSymbol'
+      --Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
 
 
 
@@ -186,6 +200,12 @@ structure Bipartition' where
   A : Multiset Nat
   B : Multiset Nat
 
+
+def Multiset.Nat.add_zero (n:ℕ) (S : Multiset ℕ) : Multiset ℕ := Multiset.replicate n 0 + S
+
+open Multiset.Nat
+--#eval add_zero 3 {1,2,3}
+
 namespace Bipartition'
 
 def rank (S : Bipartition') : ℕ := S.A.sum + S.B.sum
@@ -208,12 +228,6 @@ def remove_zero (S : Bipartition') : Bipartition' where
   A := pos S.A
   B := pos S.B
 
-def add_zero (n:ℕ) (S : Multiset ℕ) : Multiset ℕ :=
-match n with
-  | 0 => S
-  | n+1 => add_zero n (insert 0 S)
-
---#eval add_zero 3 {1,2,3}
 
 def to_ssymbol_aux (init : ℕ) (S : List ℕ) : List ℕ
 := S.enum.map (fun (i, x) => x + i * 2 + init)
@@ -243,8 +257,8 @@ def toSkippingSymbol' (P : Bipartition') : SkippingSymbol' :=
     let b := Multiset.card P.B
     exact
       if h : b<a
-      then ⟨to_ssymbol 0 P.A, to_ssymbol 1 (add_zero (a-b-1) P.B), sorry, sorry, sorry, sorry⟩
-      else ⟨to_ssymbol 0 (add_zero (b-a+1) P.A), to_ssymbol 1 P.B, sorry, sorry, sorry, sorry⟩
+      then ⟨⟨to_ssymbol 0 P.A, to_ssymbol 1 (add_zero (a-b-1) P.B)⟩, sorry, sorry, sorry, sorry⟩
+      else ⟨⟨to_ssymbol 0 (add_zero (b-a+1) P.A), to_ssymbol 1 P.B⟩, sorry, sorry, sorry, sorry⟩
 
 
 #eval (toSkippingSymbol' ⟨{0,0,1,3,7,7},{0,0,0,3,3,4}⟩:SkippingSymbol)
@@ -291,6 +305,9 @@ def SkippingSymbol'.toBP (S : SkippingSymbol') : Bipartition := Quot.mk _ (S.toB
 
 end Bipartition
 
+
+
+
 section test
 
 def s1' : SkippingSymbol' where
@@ -315,6 +332,8 @@ def s1'' : ReducedSkippingSymbol := ⟨s1', by decide⟩
 def s1 : SkippingSymbol := Quot.mk _ s1'
 
 def s2 : SkippingSymbol := Quot.mk _ s2'
+
+
 
 
 
