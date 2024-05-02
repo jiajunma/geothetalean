@@ -21,8 +21,8 @@ elab "debug!" x:term : term => do
 
 def test : ℕ :=
   let x := 42 + 21
-  let y:= debug! x
-  x
+  let x := debug! x
+  x+1
 
 #eval test
 
