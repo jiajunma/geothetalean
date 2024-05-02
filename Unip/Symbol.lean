@@ -505,8 +505,6 @@ section test
 
 def s1' := mkSSymbolC' {0, 2,4,7,21};{2,4,9,12}
 
-
-
 def s2' := mkSSymbolC' {0, 2,4,6,8,21,24};{1, 3,5,7,9,12}
 def s3' := mkSSymbolC' {0, 2,4,6,8,21,24};{1, 3,5,7,9,12}
 
