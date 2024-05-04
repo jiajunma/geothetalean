@@ -8,6 +8,8 @@ import Mathlib.Data.Multiset.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Sort
+import Mathlib.Tactic.Linarith.Frontend
+
 
 import Unip.Auxi
 
@@ -117,6 +119,176 @@ unsafe instance  reprMP : Repr MarkedPartitionBD where
 structure MarkedPartitionC extends MarkedPartition where
   typeC : isTypeC lam
   nuodd  : nu.val.all (fun r => Even r)
+
+
+
+section generator
+
+
+/-
+Generate all partitions of size n with all parts less then or equal to m
+-/
+def gen_parts (n : ℕ ) (m : ℕ) : List (Multiset ℕ ) :=
+  match n with
+  | 0 => [{}]
+  | n'+1 => List.range (min (n'+1) m) >>= (fun i => ((gen_parts (n'-i) (i+1)).map (fun l => {i+1} + l)))
+termination_by n
+
+#eval gen_parts 4 2
+
+
+#eval List.range' 1 10 >>=  (fun i => [i+1])
+
+
+def ALlPartitions' (n : ℕ) : List (Multiset ℕ) := gen_parts n n
+
+/-
+Generate all partitions of type C of size n with all parts less then or equal to m
+-/
+def gen_parts_C (n : ℕ ) (m : ℕ) : List (Multiset ℕ ) :=
+  match n with
+  | 0 => [{}]
+  -- For induction each time only add even number of boxes
+  -- either add {2i} or add {i,i} with i odd
+  | n'+1 => List.range (min n m) >>= (
+    fun i => if (i+1) % 2 = 0 then
+      (gen_parts_C (n'-i) (i+1)).map (fun l => {i+1} + l)
+    else (if 2*(i +1) ≤ n'+1 then
+      (gen_parts_C (n'-2*i-1) (i+1)).map (fun l => {i+1,i+1} + l)
+    else
+      [] )
+    )
+termination_by n
+
+lemma gen_parts_C_isTypeC : p ∈ gen_parts_C n m → isTypeC p := by sorry
+
+
+
+def ALlPartitionsC' (n : ℕ) : List (Multiset ℕ) := gen_parts_C n n
+
+#eval gen_parts_C 10 10
+#eval gen_parts_C 11 11
+
+
+/-
+Generate all partitions of type BD of size n with all parts less then or equal to m
+-/
+def gen_parts_BD (n : ℕ ) (m : ℕ) : List (Multiset ℕ ) :=
+  match n with
+  | 0 => [{}]
+  -- For induction each time only add even number of boxes
+  -- either add {2i} or add {i,i} with i odd
+  | n'+1 => List.range (min n m) >>= (
+    fun i => if (i+1) % 2 = 1 then
+      (gen_parts_BD (n'-i) (i+1)).map (fun l => {i+1} + l)
+    else (if 2*(i +1) ≤ n'+1 then
+      (gen_parts_BD (n'-2*i-1) (i+1)).map (fun l => {i+1,i+1} + l)
+    else
+      [] )
+    )
+termination_by n
+
+
+
+lemma gen_parts_BD_isTypeBD : p ∈ gen_parts_BD n m → isTypeBD p := by sorry
+
+
+def ALlPartitionsBD' (n : ℕ) : List (Multiset ℕ) := gen_parts_BD n n
+
+
+#eval gen_parts_BD 11 11
+
+-- compute the maximal multiplicity of (k1,k2) contained in (m,n)
+-- If k1=k2=0, the return will be 0!
+def maxmul (m n k1 k2 : ℕ) : ℕ :=
+  if k1 = 0 then n/k2
+  else if k2 = 0 then m/k1
+  else min (m/k1) (n/k2)
+
+/-
+For dual pair (O_m, Sp_n).
+Now we generate all the pairs of orthosymplectic orbits
+These are multi-sets of partitions such that (k+1,k) and (k,k+1) and pair {(k,k),(k,k)} can occure.
+Moreover, if k is even, then (k,k+1) has even multiplicity and if k is odd, then (k+1,k) has even multiplicity.
+-/
+-- k stands for length of row length currently are placing.
+def gen_OS(m : ℕ) (n : ℕ) (k: ℕ) : List (Multiset (ℕ × ℕ)) :=
+  if n % 2 = 1 then []
+  else
+    match k with
+    | 0 => if m=0 ∧ n=0 then [{}] else []
+    | k'+1 =>
+      -- First add {(k'+1,k'+1), (k'+1,k'+1)} pairs
+      List.range (1 + maxmul m n (2*(k'+1)) (2*(k'+1))) >>=
+        fun a =>
+          let m1 := (m-2*(k'+1)*a)
+          let n1 := (n-2*(k'+1)*a)
+          List.map ((Multiset.replicate (2*a) (k'+1,k'+1)) + ·) <|
+          -- Now add {(k'+1,k')} pairs
+          List.range (1 + maxmul m1 n1 (k'+1) k') >>= fun b =>
+           let m2 := (m1-(k'+1)*b)
+           let n2 := (n1-k'*b)
+           if (k'+1) % 2 = 0 ∧ b % 2 = 1 then []
+           else
+            List.map  ((Multiset.replicate b (k'+1,k'))  + ·) <|
+            -- Now add {(k',k'+1)} pairs
+            List.range (1 + maxmul m2 n2 k' (k'+1)) >>= fun c =>
+            let m3 := (m2-k'*c)
+            let n3 := (n2-(k'+1)*c)
+            if k' % 2 = 0 ∧ c % 2 = 1 then []
+            else
+              -- Lastly do the recursion
+              List.map ((Multiset.replicate c (k',k'+1)) + ·) <| gen_OS m3 n3 k'
+
+def AllOrthoSymplectic (m : ℕ) (n : ℕ) : List (Multiset (ℕ × ℕ)) :=
+  gen_OS m n (max m n)
+
+#eval AllOrthoSymplectic 4 4
+
+/- def gen_OS(m : ℕ) (n : ℕ) (maxr : ℕ) : List (Multiset (ℕ × ℕ)) :=
+  if n % 2 = 1 then []
+  else
+    match maxr with
+    | 0 => match m,n with
+      | 0,0 => [{}]
+      | _,_ => []
+    | k'+1 =>
+      List.finRange (k'+1)  >>= (
+        fun r' =>
+          let r := r'.1
+          -- First add {(i+1,i+1), (i+1,i+1)} pairs
+          List.range (1 + min (n/(2*r+2)) (m/(2*r+2))) >>=
+            fun a =>
+              let m1 := (m-2*(r+1)*a)
+              let n1 := (n-2*(r+1)*a)
+              List.map ((Multiset.replicate (2*a) (r+1,r+1)) + ·) <|
+               List.range (1 + min (m1/(r+1)) (n1/r)) >>= fun b =>
+                let m2 := (m1-(r+1)*b)
+                let n2 := (n1-r*b)
+                if (r+1) % 2 = 0 ∧ b % 2 = 1 then []
+                else
+                  List.map  ((Multiset.replicate b (r+1,r))  + ·) <|
+                  List.range (1 + min (m2/r) (n2/(r+1))) >>= fun c =>
+                  let m3 := (m2-r*c)
+                  let n3 := (n2-(r+1)*c)
+                  if r %2 = 0 ∧ c % 2 = 1 then []
+                  else
+                    List.map ((Multiset.replicate c (r,r+1)) + ·) <|
+                    have : r'.1 ≤ k' := by linarith [r'.2]
+                    gen_OS m3 n3 r'.1
+      )
+
+ -/
+
+
+/-
+Now we generate the pairs of relevent orthosymplectic orbits
+These are orbits such that (k+1,k) and (k,k+1) are not appear simautaonously.
+-/
+
+
+
+end generator
 
 
 section test
