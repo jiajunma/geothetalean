@@ -8,6 +8,7 @@ import Mathlib.Data.Multiset.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Sort
+import Mathlib.Data.Finset.Powerset
 import Mathlib.Tactic.Linarith.Frontend
 
 
@@ -201,7 +202,8 @@ def ALlPartitionsBD' (n : ℕ) : List (Multiset ℕ) := gen_parts_BD n n
 -- compute the maximal multiplicity of (k1,k2) contained in (m,n)
 -- If k1=k2=0, the return will be 0!
 def maxmul (m n k1 k2 : ℕ) : ℕ :=
-  if k1 = 0 then n/k2
+  if k1 = 0 ∧ k2 = 0 then 0
+  else if k1 = 0  then n/k2
   else if k2 = 0 then m/k1
   else min (m/k1) (n/k2)
 
@@ -211,26 +213,61 @@ Now we generate all the pairs of orthosymplectic orbits
 These are multi-sets of partitions such that (k+1,k) and (k,k+1) and pair {(k,k),(k,k)} can occure.
 Moreover, if k is even, then (k,k+1) has even multiplicity and if k is odd, then (k+1,k) has even multiplicity.
 -/
--- k stands for length of row length currently are placing.
+-- k stands for row length in the ab-diagram currently are placing.
 def gen_OS(m : ℕ) (n : ℕ) (k: ℕ) : List (Multiset (ℕ × ℕ)) :=
   if n % 2 = 1 then []
   else
     match k with
     | 0 => if m=0 ∧ n=0 then [{}] else []
     | k'+1 =>
-      -- First add {(k'+1,k'+1), (k'+1,k'+1)} pairs
-      List.range (1 + maxmul m n (2*(k'+1)) (2*(k'+1))) >>=
+      if k % 2 = 0 then
+      -- First add {(k/2,k/2), (k/2,k/2)} pairs
+      List.range (1 + maxmul m n (k) (k)) >>=
         fun a =>
-          let m1 := (m-2*(k'+1)*a)
-          let n1 := (n-2*(k'+1)*a)
-          List.map ((Multiset.replicate (2*a) (k'+1,k'+1)) + ·) <|
+          let m1 := (m-k*a)
+          let n1 := (n-k*a)
+          List.map ((Multiset.replicate (2*a) (k/2,k/2)) + ·) <|
+          gen_OS m1 n1 k'
+      else
+      -- Then add {(k/2+1,k/2), (k/2,k/2)} pairs
+          List.range (1 + maxmul m n (k/2 + 1) (k/2)) >>= fun a =>
+           let m1 := (m-(k/2+1)*a)
+           let n1 := (n-k/2*a)
+           if (k/2+1) % 2 = 0 ∧ a % 2 = 1 then []
+           else
+            List.map  ((Multiset.replicate a (k/2+1,k/2))  + ·) <|
+            -- Now add {(k/2,k/2+1)} pairs
+            List.range (1 + maxmul m1 n1 (k/2) (k/2+1)) >>= fun c =>
+            let m2 := (m1-k/2*c)
+            let n2 := (n1-(k/2+1)*c)
+            if (k/2) % 2 = 0 ∧ c % 2 = 1 then []
+            else
+              -- Lastly do the recursion
+              List.map ((Multiset.replicate c (k/2,k/2+1)) + ·) <| gen_OS m2 n2 k'
+
+
+/-
+Another version of the above function
+-/
+def gen_OS'(m : ℕ) (n : ℕ) (k: ℕ) : List (Multiset (ℕ × ℕ)) :=
+  if n % 2 = 1 then []
+  else
+    match k with
+    | 0 => if m=0 ∧ n=0 then [{}] else []
+    | k'+1 =>
+      -- First add {(k'+1,k'+1), (k'+1,k'+1)} pairs
+      List.range (1 + maxmul m n (2*k) (2*k)) >>=
+        fun a =>
+          let m1 := (m-2*k*a)
+          let n1 := (n-2*k*a)
+          List.map ((Multiset.replicate (2*a) (k,k)) + ·) <|
           -- Now add {(k'+1,k')} pairs
           List.range (1 + maxmul m1 n1 (k'+1) k') >>= fun b =>
            let m2 := (m1-(k'+1)*b)
            let n2 := (n1-k'*b)
            if (k'+1) % 2 = 0 ∧ b % 2 = 1 then []
            else
-            List.map  ((Multiset.replicate b (k'+1,k'))  + ·) <|
+            List.map  ((Multiset.replicate b (k'+1,k')) + ·) <|
             -- Now add {(k',k'+1)} pairs
             List.range (1 + maxmul m2 n2 k' (k'+1)) >>= fun c =>
             let m3 := (m2-k'*c)
@@ -238,12 +275,54 @@ def gen_OS(m : ℕ) (n : ℕ) (k: ℕ) : List (Multiset (ℕ × ℕ)) :=
             if k' % 2 = 0 ∧ c % 2 = 1 then []
             else
               -- Lastly do the recursion
-              List.map ((Multiset.replicate c (k',k'+1)) + ·) <| gen_OS m3 n3 k'
+              List.map ((Multiset.replicate c (k',k'+1)) + ·) <| gen_OS' m3 n3 k'
+
+
+
+def gen_OS_relevent (m : ℕ) (n : ℕ) (k: ℕ) : List (Multiset (ℕ × ℕ)) :=
+  if n % 2 = 1 then []
+  else
+    match k with
+    | 0 => if m=0 ∧ n=0 then [{}] else []
+    | k'+1 =>
+      if k % 2 = 0 then
+      -- Add {(k/2,k/2), (k/2,k/2)} pairs
+      List.range (1 + maxmul m n (k) (k)) >>=
+        fun a =>
+          let m1 := (m-k*a)
+          let n1 := (n-k*a)
+          List.map ((Multiset.replicate (2*a) (k/2,k/2)) + ·) <| gen_OS_relevent m1 n1 k'
+      else
+          -- Add {(k/2+1,k/2), (k/2,k/2)} pairs
+          (List.range (1 + maxmul m n ((k/2) + 1) (k/2)) >>= fun a =>
+           let m1 := (m-((k/2)+1)*a)
+           let n1 := (n-(k/2)*a)
+           if ((k/2)+1) % 2 = 0 ∧ a % 2 = 1 then []
+           else
+            List.map  ((Multiset.replicate a ((k/2)+1,k/2))  + ·) <| gen_OS_relevent m1 n1 k' )
+          ++
+          -- Add {(k/2,k/2+1)} pairs
+          (List.range (1 + maxmul m n (k/2) ((k/2)+1)) >>= fun a =>
+            let m1 := (m-(k/2)*a)
+            let n1 := (n-((k/2)+1)*a)
+            -- Very tricky, have to avoid the case where no rows are added,
+            -- the case was already covered in the previous list
+            if a =0 ∨ ((k/2) % 2 = 0 ∧ a % 2 = 1) then []
+            else
+              List.map ((Multiset.replicate a (k/2,(k/2)+1)) + ·) <| gen_OS_relevent m1 n1 k' )
+
+
+
+def AllOrthoSymplectic' (m : ℕ) (n : ℕ) : List (Multiset (ℕ × ℕ)) :=
+  gen_OS' m n (max m n)
 
 def AllOrthoSymplectic (m : ℕ) (n : ℕ) : List (Multiset (ℕ × ℕ)) :=
-  gen_OS m n (max m n)
+  gen_OS m n (m+n)
 
-#eval AllOrthoSymplectic 4 4
+
+def AllOrthoSymplectic_relevent (m : ℕ) (n : ℕ) : List (Multiset (ℕ × ℕ)) :=
+  gen_OS_relevent m n (m+n)
+
 
 /-Projection to the first coordiante -/
 def projO (p : Multiset (ℕ × ℕ)) : Multiset ℕ :=
@@ -252,14 +331,89 @@ def projO (p : Multiset (ℕ × ℕ)) : Multiset ℕ :=
 
 /-Projection to the second coordiante -/
 def projSp (p : Multiset (ℕ × ℕ)) : Multiset ℕ :=
-  p.map (fun x => x.1)
+  p.map (fun x => x.2)
+
+
+def ff :=  gen_OS 4 4 8
+
+#eval ff
+
+def ff' := gen_OS' 4 4 4
+
+#eval ff'
+
+#eval ff=ff'
+
+def n := 9
+def m := 12
+
+#eval (AllOrthoSymplectic n m).map (fun x => (projO x).sum)
+#eval (AllOrthoSymplectic n m).map (fun x => (projSp x).sum)
+#eval (AllOrthoSymplectic' n m).length
+#eval (AllOrthoSymplectic' n m) --.toFinset.card
+#eval (AllOrthoSymplectic n m).length
+#eval ((AllOrthoSymplectic n m).toFinset \ (AllOrthoSymplectic' n m).toFinset)
+
+#eval AllOrthoSymplectic n m = AllOrthoSymplectic' n m
+
+
+#eval AllOrthoSymplectic 9 10 |>.length
+
 
 /-
 Now we generate the pairs of relevent orthosymplectic orbits
-These are orbits such that (k+1,k) and (k,k+1) are not appear simautaonously.
+These are orbits such that (k+1,k) and (k,k+1) are not appear simultaneously.
 -/
 def isRelevent (p : Multiset (ℕ × ℕ)) : Bool :=
-  p.projO.all (fun x => )
+  -- First find all possible rows
+  p.map (fun r => r.1+r.2) |>.all
+  (fun r => r % 2 = 0 ∨
+            -- either r is even
+            ¬ ((r/2,r/2+1)∈ p ∧ (r/2+1,r/2)∈ p)
+            -- or (r/2,r/2+1) and (r/2+1,r/2) are not appear simultaneously
+            )
+
+#eval AllOrthoSymplectic 10 10 |>.filter isRelevent |>.length
+
+#eval AllOrthoSymplectic_relevent 10 10 |>.length
+#eval AllOrthoSymplectic_relevent 10 10 |>.toFinset.card
+
+
+/-
+Given a relevent orthosymplectic orbit,
+now we generate all relevent orbit data
+
+-- We assume the orbit is relevent!
+-/
+
+def gen_OS_data (p : Multiset (ℕ × ℕ)) : Finset (Finset ℕ × Finset ℕ) :=
+  -- The projection to Orthogonal side
+  let O1 := projO p
+  -- The projection to Symplectic side
+  let O2 := projSp p
+  -- The component group of  the orthogonal side
+  let C1 :Finset ℕ := filter (Odd · ) O1|>.toFinset
+  -- The component group of  the symplectic side
+  -- Becareful about zero!
+  let C2 :Finset ℕ := filter (fun x => x>0 ∧ Even x) O2|>.toFinset
+  -- Build the dictionary that both side must be the same
+  -- only for odd lenght pairs (k, k+1) or (k,k-1).
+  -- They are in the dictionary only if k is odd
+  -- Becareful about zero!
+  let D := filter (fun x => Odd (x.1+x.2) ∧ x.2 >0) p |>.toFinset
+  -- The linked part for the orthogonal side
+  let L1 := Finset.image (fun x => x.1) D
+  let L2 := Finset.image (fun x => x.2) D
+  -- Now all relevent orbit data is in one-one correspondence with
+  -- P(D) x P(C1-L1) x P(C2-L2)
+  let pr1 := fun s : Finset (ℕ × ℕ) => Finset.image (fun x => x.1) s
+  let pr2 := fun s : Finset (ℕ × ℕ) => Finset.image (fun x => x.2) s
+  Finset.image (fun x --: (Finset (ℕ × ℕ ))× ((Finset ℕ) × (Finset ℕ))
+                    => (pr1 x.1 ∪ x.2.1, pr2 x.1 ∪ x.2.2))
+  <| Finset.product (Finset.powerset D)
+     (Finset.product (Finset.powerset (C1 \ L1))
+                     (Finset.powerset (C2 \ L2)))
+#eval AllOrthoSymplectic_relevent  4 4 |> List.map gen_OS_data
 
 end generator
 
