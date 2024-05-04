@@ -245,48 +245,21 @@ def AllOrthoSymplectic (m : ℕ) (n : ℕ) : List (Multiset (ℕ × ℕ)) :=
 
 #eval AllOrthoSymplectic 4 4
 
-/- def gen_OS(m : ℕ) (n : ℕ) (maxr : ℕ) : List (Multiset (ℕ × ℕ)) :=
-  if n % 2 = 1 then []
-  else
-    match maxr with
-    | 0 => match m,n with
-      | 0,0 => [{}]
-      | _,_ => []
-    | k'+1 =>
-      List.finRange (k'+1)  >>= (
-        fun r' =>
-          let r := r'.1
-          -- First add {(i+1,i+1), (i+1,i+1)} pairs
-          List.range (1 + min (n/(2*r+2)) (m/(2*r+2))) >>=
-            fun a =>
-              let m1 := (m-2*(r+1)*a)
-              let n1 := (n-2*(r+1)*a)
-              List.map ((Multiset.replicate (2*a) (r+1,r+1)) + ·) <|
-               List.range (1 + min (m1/(r+1)) (n1/r)) >>= fun b =>
-                let m2 := (m1-(r+1)*b)
-                let n2 := (n1-r*b)
-                if (r+1) % 2 = 0 ∧ b % 2 = 1 then []
-                else
-                  List.map  ((Multiset.replicate b (r+1,r))  + ·) <|
-                  List.range (1 + min (m2/r) (n2/(r+1))) >>= fun c =>
-                  let m3 := (m2-r*c)
-                  let n3 := (n2-(r+1)*c)
-                  if r %2 = 0 ∧ c % 2 = 1 then []
-                  else
-                    List.map ((Multiset.replicate c (r,r+1)) + ·) <|
-                    have : r'.1 ≤ k' := by linarith [r'.2]
-                    gen_OS m3 n3 r'.1
-      )
+/-Projection to the first coordiante -/
+def projO (p : Multiset (ℕ × ℕ)) : Multiset ℕ :=
+  p.map (fun x => x.1)
 
- -/
 
+/-Projection to the second coordiante -/
+def projSp (p : Multiset (ℕ × ℕ)) : Multiset ℕ :=
+  p.map (fun x => x.1)
 
 /-
 Now we generate the pairs of relevent orthosymplectic orbits
 These are orbits such that (k+1,k) and (k,k+1) are not appear simautaonously.
 -/
-
-
+def isRelevent (p : Multiset (ℕ × ℕ)) : Bool :=
+  p.projO.all (fun x => )
 
 end generator
 
