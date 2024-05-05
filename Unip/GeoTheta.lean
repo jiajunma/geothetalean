@@ -57,14 +57,43 @@ unsafe def defectPairs (m n : ℕ) : IO <| Finset (ℤ × ℤ) := do
 -/
 
 
+unsafe def corrSymbol (m n : ℕ) (prin : Bool := false): IO <| Finset (ℤ × ℤ) := do
+  if n % 2 = 1 then pure {}
+  else
+    let AllOS := AllOrthoSymplectic_relevent m n
+    let mut res := []
+    IO.println "----------------------------------"
+    IO.println s!"The dual pair O({m})-Sp({n})"
+    for p in AllOS do
+      let O1 := projO p
+      let O2 := projSp p
+      let red := "\x1b[31m"
+      let white:= "\x1b[0m"
+      IO.println <| red ++ s!"Orbits [{repr O1}] <====> [{repr O2}]" ++ white
+      let od ← gen_OS_od' p
+      for c in od do
+        let s1 : Symbol' := Springer.BD'_aux O1 c.1
+        let s2 : Symbol' := Springer.C'_aux O2 c.2
+        if prin ∧ s2.defect - s1.defect != 1 then
+          continue
+        else
+          IO.println s!"{repr s1} ∼ {repr s2}"
+          res := res.insert (s1.defect,s2.defect)
+    let ret := res.toFinset
+    IO.println s!"defect pairs: {repr ret}"
+    return {}
+
+
 end test_functions
 
 
 
 section test
 
+#eval corrSymbol 6 8 true
+#eval corrSymbol 6 8
 --#eval testOS 10 6
-
+/-
 #eval defectPairs 20 16
 #eval defectPairs 20 18
 #eval defectPairs 18 20
@@ -73,5 +102,7 @@ section test
 #eval defectPairs 19 20
 #eval defectPairs 19 22
 #eval defectPairs 11 22
+#eval defectPairs 25 22
+-/
 
 end test

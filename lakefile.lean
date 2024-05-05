@@ -15,3 +15,5 @@ require mathlib from git
 @[default_target]
 lean_lib «Unip» where
   -- add any library configuration options here
+
+lean_exe test_geotheta
