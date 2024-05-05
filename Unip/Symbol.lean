@@ -86,6 +86,11 @@ structure Symbol' where
   B : Finset ℕ
   deriving Inhabited, BEq, DecidableEq, Hashable
 
+namespace Symbol'
+def defect (S : Symbol') : ℤ :=  S.A.card - S.B.card
+
+end Symbol'
+
 instance  Symbol'.reprSymbol' : Repr Symbol' where
   reprPrec s _ :=
       Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]

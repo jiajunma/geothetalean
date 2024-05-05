@@ -9,6 +9,7 @@ import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Finset.Powerset
+import Mathlib.Algebra.BigOperators.Basic
 import Mathlib.Tactic.Linarith.Frontend
 
 
@@ -386,34 +387,102 @@ now we generate all relevent orbit data
 -- We assume the orbit is relevent!
 -/
 
-def gen_OS_data (p : Multiset (ℕ × ℕ)) : Finset (Finset ℕ × Finset ℕ) :=
+def Msort (p : Multiset ℕ) : List ℕ :=
+  p.sort (· ≤ · )
+
+def Fsort (p : Finset ℕ) : List ℕ :=
+  p.sort (· ≤ · )
+
+
+def gen_OS_component_data (p : Multiset (ℕ × ℕ)) : List (Finset ℕ × Finset ℕ) :=
+  -- The Projectors
+  let pr1 := fun s : Finset (ℕ × ℕ) => Finset.image (fun x => x.1) s
+  let pr2 := fun s : Finset (ℕ × ℕ) => Finset.image (fun x => x.2) s
   -- The projection to Orthogonal side
   let O1 := projO p
   -- The projection to Symplectic side
   let O2 := projSp p
   -- The component group of  the orthogonal side
-  let C1 :Finset ℕ := filter (Odd · ) O1|>.toFinset
+  let C1 : List ℕ := filter (Odd · ) O1|>.toFinset |> Fsort
   -- The component group of  the symplectic side
   -- Becareful about zero!
-  let C2 :Finset ℕ := filter (fun x => x>0 ∧ Even x) O2|>.toFinset
+  let C2 :List ℕ := filter (fun x => x>0 ∧ Even x) O2|>.toFinset |> Fsort
   -- Build the dictionary that both side must be the same
   -- only for odd lenght pairs (k, k+1) or (k,k-1).
   -- They are in the dictionary only if k is odd
   -- Becareful about zero!
-  let D := filter (fun x => Odd (x.1+x.2) ∧ x.2 >0) p |>.toFinset
-  -- The linked part for the orthogonal side
-  let L1 := Finset.image (fun x => x.1) D
-  let L2 := Finset.image (fun x => x.2) D
+  -- "0" is not in the compoent group of "Sp"
+  let D := filter (fun x => Odd x.1 ∧ Odd (x.1+x.2) ∧ x.2 >0) p |>.toFinset
+  -- The linked component for the orthogonal side
+  let L1 := pr1 D |> Fsort
+  -- The linked component for the symplectic side
+  let L2 := pr2 D |> Fsort
+  let DD := List.zip L1 L2
   -- Now all relevent orbit data is in one-one correspondence with
   -- P(D) x P(C1-L1) x P(C2-L2)
+  List.map (fun x => (
+      if (1,0) ∈ D then [1] else [] ++
+      List.filter (fun y :ℕ × ℕ => y.2 ∈ x.1) DD |>.map (fun y: ℕ × ℕ => y.1) ++ x.2.1
+      |>.toFinset,
+      L2 ++ x.2.2 |>.toFinset))
+  <| List.product (List.sublists L2)
+     (List.product (List.sublists (C1.filter (· ∉ L1)))
+                     (List.sublists (C2.filter (· ∉ L2))))
+
+
+def gen_OS_data (p : Multiset (ℕ × ℕ)) : List <|(Multiset ℕ × Finset ℕ)× (Multiset ℕ × Finset ℕ ) :=
+  -- The projection to Orthogonal side
+  let O1 := projO p
+  -- The projection to Symplectic side
+  let O2 := projSp p
+  List.map (fun x => ((O1,x.1), (O2,x.2)))
+  <| gen_OS_component_data p
+
+
+
+#eval AllOrthoSymplectic_relevent  4 4 |> List.map gen_OS_data
+
+
+
+def gen_OS_od' (p : Multiset (ℕ × ℕ)) : IO <| List (Finset ℕ × Finset ℕ) := do
+  -- The Projectors
   let pr1 := fun s : Finset (ℕ × ℕ) => Finset.image (fun x => x.1) s
   let pr2 := fun s : Finset (ℕ × ℕ) => Finset.image (fun x => x.2) s
-  Finset.image (fun x --: (Finset (ℕ × ℕ ))× ((Finset ℕ) × (Finset ℕ))
-                    => (pr1 x.1 ∪ x.2.1, pr2 x.1 ∪ x.2.2))
-  <| Finset.product (Finset.powerset D)
-     (Finset.product (Finset.powerset (C1 \ L1))
-                     (Finset.powerset (C2 \ L2)))
-#eval AllOrthoSymplectic_relevent  4 4 |> List.map gen_OS_data
+  -- The projection to Orthogonal side
+  let O1 := projO p
+  -- The projection to Symplectic side
+  let O2 := projSp p
+  -- The component group of  the orthogonal side
+  let C1 : List ℕ := filter (Odd · ) O1|>.toFinset |> Fsort
+  -- The component group of  the symplectic side
+  -- Becareful about zero!
+  let C2 :List ℕ := filter (fun x => x>0 ∧ Even x) O2|>.toFinset |> Fsort
+  -- Build the dictionary that both side must be the same
+  -- only for odd lenght pairs (k, k+1) or (k,k-1).
+  -- They are in the dictionary only if k is odd
+  -- Becareful about zero!
+  -- "0" is not in the compoent group of "Sp"
+  let D := filter (fun x => Odd x.1 ∧ Odd (x.1+x.2) ∧ x.2 >0) p |>.toFinset
+  -- The linked component for the orthogonal side
+  let L1 := pr1 D |> Fsort
+  -- The linked component for the symplectic side
+  let L2 := pr2 D |> Fsort
+  let DD := List.zip L1 L2
+  IO.println s!"L1 := {L1}"
+  IO.println s!"L2 := {L2}"
+  -- Now all relevent orbit data is in one-one correspondence with
+  -- P(D) x P(C1-L1) x P(C2-L2)
+  pure <|
+  List.map (fun x => (
+      if (1,0) ∈ D then [1] else [] ++
+      List.filter (fun y :ℕ × ℕ => y.2 ∈ x.1) DD |>.map (fun y: ℕ × ℕ => y.1) ++ x.2.1
+      |>.toFinset,
+      L2 ++ x.2.2 |>.toFinset))
+  <| List.product (List.sublists L2)
+     (List.product (List.sublists (C1.filter (· ∉ L1)))
+                     (List.sublists (C2.filter (· ∉ L2))))
+
+
 
 end generator
 

@@ -146,8 +146,8 @@ def Springer.BD'_aux (p : Partition') (c : Finset ℕ) : Symbol' := by
   let C : Finset ℕ := component.BD p
   -- Zip the component group with the interval
   let Z := List.zip (C.sort (· ≤ ·)) I
-  let A := (select Z c ∩ A') ∪ (unselect Z c ∩ B') ∪ (A' ∩ B')
-  let B := (select Z c ∩ B') ∪ (unselect Z c ∩ A') ∪ (A' ∩ B')
+  let A := ((select Z c) ∩ A') ∪ ((unselect Z c) ∩ B') ∪ (A' ∩ B')
+  let B := ((select Z c) ∩ B') ∪ ((unselect Z c) ∩ A') ∪ (A' ∩ B')
   exact ⟨A,B⟩
 
 
@@ -219,8 +219,8 @@ def Springer.C'_aux (p : Partition') (c : Finset ℕ) : Symbol' := by
   let C : Finset ℕ := component.C p
   -- Zip the component group with the interval
   let Z := List.zip (C.sort (· ≤ ·)) I
-  let A := (select Z c ∩ dS.A) ∪ (unselect Z c ∩ dS.B) ∪ (I0.join.toFinset ∩ dS.A) ∪ (dS.A ∩ dS.B)
-  let B := (select Z c ∩ dS.B) ∪ (unselect Z c ∩ dS.A) ∪ (I0.join.toFinset ∩ dS.B) ∪ (dS.A ∩ dS.B)
+  let A := ((select Z c) ∩ dS.A) ∪ ((unselect Z c) ∩ dS.B) ∪ (I0.join.toFinset ∩ dS.A) ∪ (dS.A ∩ dS.B)
+  let B := ((select Z c) ∩ dS.B) ∪ ((unselect Z c) ∩ dS.A) ∪ (I0.join.toFinset ∩ dS.B) ∪ (dS.A ∩ dS.B)
   exact ⟨A,B⟩
 
 
