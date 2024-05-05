@@ -24,38 +24,6 @@ import Unip.Partition
 open Multiset.Nat
 
 
-section prelude
-
-
-/- The interval of a List ℕ is the the set of longest string of the form {i, i+1, i+2,...,j} in the list
-The following function compute the interval
--/
-def interval (L: List ℕ) : List (List ℕ):=
-  match L with
-  | [] => []
-  | [a] => [[a]]
-  | a::b::L' => if a+1 = b then
-    let I' := interval (b::L')
-    match I'.head? with
-    | none => [[a]]
-    | some b => (a::b)::I'.tail
-    else [a]::interval (b::L')
-
-
-#eval interval [0,1,2,3,5,6,7,9,10,11, 20,21,22]
-
-
-/-
-Select the elements in the list c according to the Zip list
--/
-def select (Z : List (ℕ × List ℕ)) (c : Finset ℕ) : Finset ℕ := Z.filterMap (fun x => if x.1 ∈ c then some x.2 else none) |> List.join |> List.toFinset
-
-/-unselction the elements in the list c according to the Zip list -/
-def unselect (Z : List (ℕ × List ℕ)) (c : Finset ℕ) : Finset ℕ := Z.filterMap (fun x => if x.1 ∉ c then some x.2 else none) |> List.join |> List.toFinset
-
-
-end prelude
-
 
 abbrev Partition' := Multiset ℕ
 

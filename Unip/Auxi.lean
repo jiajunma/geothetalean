@@ -1,4 +1,4 @@
-import Mathlib.Data.Multiset.Sort
+import Mathlib.Data.Finset.Sort
 import Init.Data.Nat.Basic
 import Mathlib.Data.Multiset.Fold
 
@@ -85,3 +85,85 @@ lemma not_all_iff (s : Multiset α) (p : α → Bool) : all s p = false ↔ ∃ 
 
 
 end Multiset
+
+
+
+section prelude
+
+def haspair (f : α → α) (A: Finset α) : Prop := ∃ (i:α), i ∈ A ∧ f i ∈ A
+
+@[simp]
+def haspair' [DecidableEq α] (f : α → α) (A: Finset α) : Bool := A.filter (λ i => f i ∈ A) ≠ ∅
+
+@[simp]
+lemma haspair'_iff {α} [DecidableEq α] (f : α → α) (A: Finset α) : haspair f A  ↔  haspair' f A = true := by
+  sorry
+
+lemma Nat.add_inj (a : ℕ) :
+  Function.Injective <| fun x : ℕ => x+n := by
+  intro _ _ _; aesop
+
+instance Nat.le.decidable : DecidableRel (· ≤ · : ℕ → ℕ → Prop) := inferInstance
+
+
+
+instance MultisetNat.repr : Repr (Multiset ℕ) where
+  reprPrec s _ :=
+      Std.Format.joinSep (s.sort (· ≤ ·)) ", "
+
+instance FinsetNat.repr : Repr (Finset ℕ) where
+  reprPrec s _ :=
+      Std.Format.joinSep (s.sort (· ≤ ·)) ", "
+
+instance FinsetNat.hashable : Hashable (Finset ℕ) where
+  hash s := hash <| s.sort (· ≤ ·)
+
+instance MultisetNat.hashable : Hashable (Multiset ℕ) where
+  hash s := hash <| s.sort (· ≤ ·)
+
+/-Triagle_number is the number of * in the following diagram of (n-1 rows)
+  * * ... *
+  * * ..*
+  ....
+  * *
+  *
+-/
+def triangle_number (n : ℕ) : ℕ := n * (n - 1) / 2
+
+
+def _card_lem (A : Finset ℕ) : ({0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ A).card = 1 + A.card  := by calc
+      _ = ({0}:Finset ℕ).card + (Finset.map ⟨(· + 2), Nat.add_inj 2⟩ A).card
+      := by simp [Finset.card_union_of_disjoint]
+      _ = _ := by simp
+
+
+
+
+/- The interval of a List ℕ is the the set of longest string of the form {i, i+1, i+2,...,j} in the list
+The following function compute the interval
+-/
+def interval (L: List ℕ) : List (List ℕ):=
+  match L with
+  | [] => []
+  | [a] => [[a]]
+  | a::b::L' => if a+1 = b then
+    let I' := interval (b::L')
+    match I'.head? with
+    | none => [[a]]
+    | some b => (a::b)::I'.tail
+    else [a]::interval (b::L')
+
+
+#eval interval [0,1,2,3,5,6,7,9,10,11, 20,21,22]
+
+
+/-
+Select the elements in the list c according to the Zip list
+-/
+def select (Z : List (ℕ × List ℕ)) (c : Finset ℕ) : Finset ℕ := Z.filterMap (fun x => if x.1 ∈ c then some x.2 else none) |> List.join |> List.toFinset
+
+/-unselction the elements in the list c according to the Zip list -/
+def unselect (Z : List (ℕ × List ℕ)) (c : Finset ℕ) : Finset ℕ := Z.filterMap (fun x => if x.1 ∉ c then some x.2 else none) |> List.join |> List.toFinset
+
+
+end prelude

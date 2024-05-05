@@ -462,26 +462,25 @@ def gen_OS_od' (p : Multiset (ℕ × ℕ)) : IO <| List (Finset ℕ × Finset �
   -- They are in the dictionary only if k is odd
   -- Becareful about zero!
   -- "0" is not in the compoent group of "Sp"
-  let D := filter (fun x => Odd x.1 ∧ Odd (x.1+x.2) ∧ x.2 >0) p |>.toFinset
-  -- The linked component for the orthogonal side
-  let L1 := pr1 D |> Fsort
-  -- The linked component for the symplectic side
-  let L2 := pr2 D |> Fsort
-  let DD := List.zip L1 L2
-  IO.println s!"L1 := {L1}"
-  IO.println s!"L2 := {L2}"
+  let D := p.bind (fun x => if Odd x.1 ∧ Odd (x.1+x.2) then {x.1,x.2} else {}) |>.toFinset |> Fsort
+  --IO.println s!"D := {D}"
+  -- Compute the intervals
+  let I := interval D
+  let I1 := I.filter (fun x => 0 ∉ x)
+  -- The interval I0 is always selected
+  let I0 := I.filter (fun x => 0 ∈ x) |>.join
+  --IO.println s!"I := {I}"
   -- Now all relevent orbit data is in one-one correspondence with
   -- P(D) x P(C1-L1) x P(C2-L2)
   pure <|
-  List.map (fun x => (
-      if (1,0) ∈ D then [1] else [] ++
-      List.filter (fun y :ℕ × ℕ => y.2 ∈ x.1) DD |>.map (fun y: ℕ × ℕ => y.1) ++ x.2.1
-      |>.toFinset,
-      L2 ++ x.2.2 |>.toFinset))
-  <| List.product (List.sublists L2)
-     (List.product (List.sublists (C1.filter (· ∉ L1)))
-                     (List.sublists (C2.filter (· ∉ L2))))
-
+  List.map (fun x =>
+    -- selected
+    let sel := I0 ++ (x.1.join)
+    (sel.filter (· ∈ C1) ++ x.2.1 |>.toFinset,
+     sel.filter (· ∈ C2) ++ x.2.2 |>.toFinset))
+  <| List.product (List.sublists I1)
+     (List.product (List.sublists (C1.filter (· ∉ D)))
+                     (List.sublists (C2.filter (· ∉ D))))
 
 
 end generator
