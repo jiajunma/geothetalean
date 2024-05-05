@@ -90,10 +90,10 @@ end test_functions
 
 section test
 
+/-
 #eval corrSymbol 6 8 true
 #eval corrSymbol 6 8
 --#eval testOS 10 6
-/-
 #eval defectPairs 20 16
 #eval defectPairs 20 18
 #eval defectPairs 18 20
