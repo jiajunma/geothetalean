@@ -107,7 +107,7 @@ def CmodifyN (N : ℕ) (d :ℤ) : ℕ := N - (d*(d-1)).toNat
 Type D modification of N by defect
 N  ↦ N -(d * d -1)
 -/
-def DmodifyN (N : ℕ) (d :ℤ) : ℕ := N + 1 - (d*d).toNat
+def DmodifyN (N : ℕ) (d :ℤ) : ℕ := N  - (d*d).toNat
 
 
 /-
@@ -116,7 +116,9 @@ The function test whether the correspondence of sysmbols are independent of defe
 unsafe def test_eqform (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :ℕ:= 10): IO Unit := do
   let ⟨APairs,AllD⟩  ← corrSymbol m n (verb:=0)
   let restD:= AllD.filter (·  ≠ ((m:ℤ)%2,1))
+  IO.println s!"Consider the dual pair: O({m})-Sp({n})"
   for dp in restD.1.unquot do
+    IO.println <| String.replicate (40) '-'
     IO.println s!"Test defect pair: {repr dp}"
     let ⟨subpairs1,_⟩  ← corrSymbol m n (select:= some dp) (verb:=0)
     let mm := DmodifyN m dp.1
@@ -127,10 +129,10 @@ unsafe def test_eqform (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :�
 
     let rpairs1 := List.map toRepn subpairs1 |>.toFinset
     let rpairs2 := List.map toRepn subpairs2 |>.toFinset
-    IO.println s!"The model dual pair: O({mm})-Sp({nn})"
-    IO.println s!"|s1| = {repr rpairs1.card}, |s2| = {repr rpairs2.card}"
-    IO.println s!"s1-standard : {repr (rpairs1 \ rpairs2)}"
-    IO.println s!"standard-s1 : {repr (rpairs2 \ rpairs1)}"
+    IO.println s!"The Springer model pairs: O({mm})-Sp({nn})"
+    IO.println s!"|s1| = {repr rpairs1.card}, |Springer| = {repr rpairs2.card}"
+    IO.println s!"s1-Springer: {repr (rpairs1 \ rpairs2)}"
+    IO.println s!"Springer-s1 : {repr (rpairs2 \ rpairs1)}"
 
   return ()
 
@@ -141,9 +143,14 @@ end test_functions
 
 section test
 
+#eval corrSymbol 4 6
+
 #eval corrSymbol 6 8 ((0,1):ℤ × ℤ) 5
 
+#eval test_eqform 4 6
+
 #eval test_eqform 8 10
+
 /-
 #eval corrSymbol 6 8 true
 #eval corrSymbol 6 8
