@@ -77,6 +77,7 @@ IO <| List (Symbol' × Symbol') × Finset (ℤ × ℤ)
       let red := "\x1b[31m"
       let white:= "\x1b[0m"
       if verb >6 then
+        IO.println <| red ++ s!"ab-diagram {repr p}" ++ white
         IO.println <| red ++ s!"Orbits [{repr O1}] <====> [{repr O2}]" ++ white
       else pure ()
       let od ← gen_OS_od' p
