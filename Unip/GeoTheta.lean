@@ -115,7 +115,7 @@ The function test whether the correspondence of sysmbols are independent of defe
 -/
 unsafe def test_eqform (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :ℕ:= 10): IO Unit := do
   let ⟨APairs,AllD⟩  ← corrSymbol m n (verb:=0)
-  let restD:= AllD.filter (·  ≠ (0,1))
+  let restD:= AllD.filter (·  ≠ ((m:ℤ)%2,1))
   for dp in restD.1.unquot do
     IO.println s!"Test defect pair: {repr dp}"
     let ⟨subpairs1,_⟩  ← corrSymbol m n (select:= some dp) (verb:=0)
@@ -143,7 +143,7 @@ section test
 
 #eval corrSymbol 6 8 ((0,1):ℤ × ℤ) 5
 
-#eval test_eqform 7 8
+#eval test_eqform 8 10
 /-
 #eval corrSymbol 6 8 true
 #eval corrSymbol 6 8
