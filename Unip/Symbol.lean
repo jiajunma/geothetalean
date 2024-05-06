@@ -28,10 +28,26 @@ open Multiset
  (2) |A| + |B| is odd
 -/
 
-section prelude
+@[ext]
+structure Bipartition' where
+  A : Multiset Nat
+  B : Multiset Nat
+  deriving BEq, DecidableEq, Hashable
 
-end prelude
+namespace Bipartition'
+instance  reprBipartition' : Repr Bipartition' where
+  reprPrec s _ :=
+      Std.Format.join ["{", repr s.A, ";", repr s.B, "}"]
 
+
+def remove_zero (S : Bipartition') : Bipartition' := by
+  let pos := fun A : Multiset ℕ => A.filter (0 < ·)
+  exact ⟨pos S.A, pos S.B⟩
+
+end Bipartition'
+
+
+open Multiset.Nat
 @[ext]
 structure Symbol' where
   A : Finset ℕ
@@ -46,7 +62,7 @@ instance coeSymbol' : Coe (Finset ℕ × Finset ℕ) Symbol' where
   coe := fun ⟨A,B⟩ => ⟨A,B⟩
 
 
-instance  Symbol'.reprSymbol' : Repr Symbol' where
+instance  reprSymbol' : Repr Symbol' where
   reprPrec s _ :=
       Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
 
@@ -171,6 +187,35 @@ decreasing_by
 #eval ⟨{0,3,5},{1,3}⟩ |> regulate_defectBD |> toReducedBD
 #eval ⟨{0,3,5},{1,7}⟩ |> shift_defectBD 3
 #eval ⟨{0,3,5},{1,3}⟩ |> shift_defectBD (11) |> regulate_defectBD |> toReducedBD
+
+def remove_zero (A : Multiset ℕ) : Multiset ℕ := A.filter (0 ≠ ·)
+
+
+/-
+This function treats the Type C. One can see that
+the algorithm is independent of defect.
+-/
+def CSymbol_toBP (S : Symbol') : Bipartition' := by
+  have ⟨A',B'⟩ := S
+  let A := List.zip (A'.sort (· ≤ ·)) (List.range A'.card) |>.map (fun x => x.1 - 2*x.2)
+  let B := List.zip (B'.sort (· ≤ ·)) (List.range B'.card) |>.map (fun x => x.1 - 2*x.2-1)
+  exact ⟨A,B⟩
+
+/-
+This function treats the Type BD defect 0, 1 case
+-/
+def BDSymbol_toBP (S : Symbol') : Bipartition' := by
+  let S':= shift_defectBD 0 S
+  have ⟨A',B'⟩ := S
+  let A := List.zip (A'.sort (· ≤ ·)) (List.range A'.card) |>.map (fun x => x.1 - 2*x.2)
+  let B := List.zip (B'.sort (· ≤ ·)) (List.range B'.card) |>.map (fun x => x.1 - 2*x.2)
+  exact ⟨A,B⟩
+
+
+#eval ⟨{0,3,5,7}, {1, 4,5}⟩ |> shift_defectC 4 |> CSymbol_toBP |>.remove_zero
+
+#eval ⟨{0,3,5,7}, {1, 4,5}⟩ |> shift_defectC (-3) |> CSymbol_toBP |>.remove_zero
+
 
 end Symbol'
 
@@ -451,12 +496,6 @@ end SkippingSymbolC
 
 section Bipartition
 
-structure Bipartition' where
-  A : Multiset Nat
-  B : Multiset Nat
-  deriving BEq, DecidableEq, Hashable
-
-open Multiset.Nat
 --#eval add_zero 3 {1,2,3}
 
 namespace Bipartition'
@@ -465,9 +504,6 @@ def rank (S : Bipartition') : ℕ := S.A.sum + S.B.sum
 
 
 
-instance  reprBipartition' : Repr Bipartition' where
-  reprPrec s _ :=
-      Std.Format.join ["{", repr s.A, ";", repr s.B, "}"]
 
 @[simp]
 def pos (A : Multiset ℕ) : Multiset ℕ := A.filter (0 < ·)
@@ -476,10 +512,6 @@ def pos (A : Multiset ℕ) : Multiset ℕ := A.filter (0 < ·)
 def upto_zero (S1 S2 : Bipartition') : Prop :=
   pos S1.A = pos S2.A ∧ pos S1.B = pos S2.B
 
-
-def remove_zero (S : Bipartition') : Bipartition' where
-  A := pos S.A
-  B := pos S.B
 
 
 def to_ssymbol_aux (init : ℕ) (S : List ℕ) : List ℕ
@@ -552,6 +584,8 @@ def toBP' : Bipartition →  Bipartition' :=
   Quot.lift Bipartition'.remove_zero (by
   intro S1 S2 h
   rcases h with ⟨h1, h2⟩
+  simp_rw [Bipartition'.pos] at h1
+  simp_rw [Bipartition'.pos] at h2
   simp_rw [Bipartition'.remove_zero,h1,h2]
   )
 
@@ -582,7 +616,7 @@ end SkippingSymbolC'
 end Bipartition
 
 
-
+/-
 section test
 
 def s1' := mkSSymbolC' {0, 2,4,7,21};{2,4,9,12}
@@ -626,3 +660,4 @@ def s2 : SkippingSymbolC := s2'
 #eval s2
 
 end test
+-/

@@ -122,10 +122,13 @@ unsafe def test_eqform (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :�
     let mm := DmodifyN m dp.1
     let nn := CmodifyN n dp.2
     -- The standard correspondence
-    let ⟨subpairs2,_⟩ ← corrSymbol mm nn  (select := some (0,1)) (verb:=0)
-    let toReduced := fun x : Symbol'×Symbol' => (toReducedBD x.1, toReducedC x.2)
-    let rpairs1 := List.map toReduced subpairs1 |>.toFinset
-    let rpairs2 := List.map toReduced subpairs2 |>.toFinset
+    let ⟨subpairs2,_⟩ ← corrSymbol mm nn  (select := some (mm%2,1)) (verb:=0)
+    let toRepn := fun x : Symbol'×Symbol' => (x.1.BDSymbol_toBP.remove_zero, x.2.CSymbol_toBP.remove_zero)
+
+    let rpairs1 := List.map toRepn subpairs1 |>.toFinset
+    let rpairs2 := List.map toRepn subpairs2 |>.toFinset
+    IO.println s!"The model dual pair: O({mm})-Sp({nn})"
+    IO.println s!"|s1| = {repr rpairs1.card}, |s2| = {repr rpairs2.card}"
     IO.println s!"s1-standard : {repr (rpairs1 \ rpairs2)}"
     IO.println s!"standard-s1 : {repr (rpairs2 \ rpairs1)}"
 
@@ -140,7 +143,7 @@ section test
 
 #eval corrSymbol 6 8 ((0,1):ℤ × ℤ) 5
 
-#eval test_eqform 8 8
+#eval test_eqform 7 8
 /-
 #eval corrSymbol 6 8 true
 #eval corrSymbol 6 8
