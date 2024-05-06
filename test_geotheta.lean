@@ -14,16 +14,18 @@ def getstr (args : List String) (i : ℕ) : String :=
 
 
 unsafe def main (args: List String) : IO UInt32 := do
-  let n : Nat := getnm args 0
-  let m : Nat := getnm args 1
-  let t : String := getstr args 2
+  let t : String := getstr args 0
+  let v : Nat := getnm args 1
+  let n : Nat := getnm args 2
+  let m : Nat := getnm args 3
 
   IO.println ""
   IO.println "Test the correspondence of defects"
-  IO.println ""
-  let res ← corrSymbol n m
+  IO.println "Usage : symbol/springer  verbose_level n m  "
   if t = "symbol" then
     IO.println "Symbol correspondence"
-  else
+    let res ← corrSymbol n m (verb := v)
+  else if t = "springer" then
+    let res ← test_eqform n m
     return 0
   return 0

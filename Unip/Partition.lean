@@ -11,7 +11,7 @@ import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Finset.Powerset
 import Mathlib.Algebra.BigOperators.Basic
 import Mathlib.Tactic.Linarith.Frontend
-
+import Mathlib.Data.Prod.Lex
 
 import Unip.Auxi
 
@@ -374,11 +374,13 @@ def isRelevent (p : Multiset (ℕ × ℕ)) : Bool :=
             -- or (r/2,r/2+1) and (r/2+1,r/2) are not appear simultaneously
             )
 
+/-
+Test code
 #eval AllOrthoSymplectic 10 10 |>.filter isRelevent |>.length
 
 #eval AllOrthoSymplectic_relevent 10 10 |>.length
 #eval AllOrthoSymplectic_relevent 10 10 |>.toFinset.card
-
+-/
 
 /-
 Given a relevent orthosymplectic orbit,
@@ -441,8 +443,25 @@ def gen_OS_data (p : Multiset (ℕ × ℕ)) : List <|(Multiset ℕ × Finset ℕ
 
 
 #eval AllOrthoSymplectic_relevent  4 4 |> List.map gen_OS_data
+#check ℕ ×ₗ ℕ
 
+instance pairNat : Ord (ℕ × ℕ ) := lexOrd
 
+def cinterval (p : Multiset (ℕ × ℕ)): List (List ℕ) := by
+  let p' : Multiset (ℕ ×ₗ ℕ):= Multiset.filter (fun x : ℕ × ℕ   => x.1 %2 =1 ∧ (x.1+x.2)%2 = 1) p |>.map (fun x : ℕ × ℕ  => (x : ℕ ×ₗ ℕ)) --|>.sort (· ≤ ·)
+  let p'' := Multiset.sort (· ≤ ·) p'
+  let rec aux (res : List (List ℕ)) (c : List ℕ) (L : List (ℕ×ₗ ℕ)) : List (List ℕ) :=
+    match res, c, L with
+    | res, [], [] => res
+    | res, c , [] => res ++ [c]
+    | res, [], h::tl => aux res [h.1,h.2] tl
+    | res, c , h::tl =>
+      if h.1 ∈ c then aux res (c++[h.2]) tl
+      else if h.2 ∈ c then aux res (c++[h.1]) tl
+      else aux (res ++ [c]) [h.1,h.2] tl
+  exact aux [] [] p''
+
+--#eval cinterval {(9,10),(11,10),(11,12),(1,2), (3,4),(5,4), (9,8)}
 
 def gen_OS_od' (p : Multiset (ℕ × ℕ)) : IO <| List (Finset ℕ × Finset ℕ) := do
   -- The Projectors
@@ -465,7 +484,7 @@ def gen_OS_od' (p : Multiset (ℕ × ℕ)) : IO <| List (Finset ℕ × Finset �
   let D := p.bind (fun x => if Odd x.1 ∧ Odd (x.1+x.2) then {x.1,x.2} else {}) |>.toFinset |> Fsort
   --IO.println s!"D := {D}"
   -- Compute the intervals
-  let I := interval D
+  let I := cinterval p
   let I1 := I.filter (fun x => 0 ∉ x)
   -- The interval I0 is always selected
   let I0 := I.filter (fun x => 0 ∈ x) |>.join

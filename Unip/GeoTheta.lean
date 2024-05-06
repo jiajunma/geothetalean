@@ -1,9 +1,15 @@
+import Init.Data.Ord
+
 import Unip.Partition
 import Unip.Springer
 
-
 section test_functions
+
+
+
 open Symbol'
+instance : Ord (ℕ × ℕ ) := lexOrd
+
 /-
 Test the correspondence between O_n and Sp_m
 -/
@@ -150,7 +156,7 @@ section test
 
 #eval test_eqform 4 6
 
-#eval test_eqform 8 10
+#eval test_eqform 14 29
 
 /-
 #eval corrSymbol 6 8 true
