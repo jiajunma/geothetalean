@@ -101,13 +101,13 @@ IO <| List (Symbol' × Symbol') × Finset (ℤ × ℤ)
 Type C modification of N by defect
 N ↦ N - d * (d-1)
 -/
-lemma CmodifyN (N : ℕ) (d :ℤ) : ℕ := N - (d*(d-1)).toNat
+def CmodifyN (N : ℕ) (d :ℤ) : ℕ := N - (d*(d-1)).toNat
 
 /-
 Type D modification of N by defect
 N  ↦ N -(d * d -1)
 -/
-lemma DmodifyN (N : ℕ) (d :ℤ) : ℕ := N + 1 - (d*d).toNat
+def DmodifyN (N : ℕ) (d :ℤ) : ℕ := N + 1 - (d*d).toNat
 
 
 /-
@@ -118,10 +118,16 @@ unsafe def test_eqform (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :�
   let restD:= AllD.filter (·  ≠ (0,1))
   for dp in restD.1.unquot do
     IO.println s!"Test defect pair: {repr dp}"
-    let ⟨subpairs1,_⟩  ← corrSymbol m n (select:= some (0,1)) (verb:=0)
-    let ⟨subpairs2,_⟩ ← corrSymbol (DmodifyN m dp.1) (CmodifyN n dp.2) (select := some (0,1)) (verb:=0)
-    let toReduced := fun x => (toReducedBD x.1, toReducedC x.2)
-    let rpairs1 := List.map
+    let ⟨subpairs1,_⟩  ← corrSymbol m n (select:= some dp) (verb:=0)
+    let mm := DmodifyN m dp.1
+    let nn := CmodifyN n dp.2
+    -- The standard correspondence
+    let ⟨subpairs2,_⟩ ← corrSymbol mm nn  (select := some (0,1)) (verb:=0)
+    let toReduced := fun x : Symbol'×Symbol' => (toReducedBD x.1, toReducedC x.2)
+    let rpairs1 := List.map toReduced subpairs1 |>.toFinset
+    let rpairs2 := List.map toReduced subpairs2 |>.toFinset
+    IO.println s!"s1-standard : {repr (rpairs1 \ rpairs2)}"
+    IO.println s!"standard-s1 : {repr (rpairs2 \ rpairs1)}"
 
   return ()
 
@@ -134,6 +140,7 @@ section test
 
 #eval corrSymbol 6 8 ((0,1):ℤ × ℤ) 5
 
+#eval test_eqform 8 8
 /-
 #eval corrSymbol 6 8 true
 #eval corrSymbol 6 8

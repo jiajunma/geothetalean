@@ -120,7 +120,7 @@ def Springer.BD'_aux (p : Partition') (c : Finset ℕ) : Symbol' := by
 
 
 def Springer.BD' (p : Partition') (hBD : isTypeBD p) (c : Finset ℕ) : SkippingSymbolBD' :=
-  ⟨Springer.BD'_aux p c, sorry, sorry⟩
+  ⟨⟨Springer.BD'_aux p c, sorry, sorry⟩⟩
 
 
 def Springer.BD (p : Partition') (hBD : isTypeBD p) (c : Finset ℕ) : SkippingSymbolBD := Quot.mk _ (Springer.BD' p hBD c)

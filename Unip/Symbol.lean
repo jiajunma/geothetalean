@@ -172,6 +172,7 @@ decreasing_by
 #eval ⟨{0,3,5},{1,7}⟩ |> shift_defectBD 3
 #eval ⟨{0,3,5},{1,3}⟩ |> shift_defectBD (11) |> regulate_defectBD |> toReducedBD
 
+end Symbol'
 
 /-
 A Skipping Symbol of type BD is a Symbol of type C such that
