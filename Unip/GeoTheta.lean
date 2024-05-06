@@ -3,7 +3,7 @@ import Unip.Springer
 
 
 section test_functions
-
+open Symbol'
 /-
 Test the correspondence between O_n and Sp_m
 -/
@@ -59,19 +59,26 @@ unsafe def defectPairs (m n : ℕ) : IO <| Finset (ℤ × ℤ) := do
 /-
 The program can select the defect pairs of the dual pair O(m)-Sp(n) and print them out.
 -/
-unsafe def corrSymbol (m n : ℕ) (select: Option (ℤ × ℤ):= none): IO <| Finset (ℤ × ℤ) := do
-  if n % 2 = 1 then pure {}
+unsafe def corrSymbol (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :ℕ:= 10): --IO <| Finset (ℤ × ℤ)
+IO <| List (Symbol' × Symbol') × Finset (ℤ × ℤ)
+:= do
+  if n % 2 = 1 then pure ⟨[],{}⟩
   else
     let AllOS := AllOrthoSymplectic_relevent m n
-    let mut res := []
-    IO.println "----------------------------------"
-    IO.println s!"The dual pair O({m})-Sp({n})"
+    let mut AllD:= []
+    let mut AllSpair:= []
+    if verb >2  then
+      IO.println "----------------------------------"
+      IO.println s!"The dual pair O({m})-Sp({n})"
+    else pure ()
     for p in AllOS do
       let O1 := projO p
       let O2 := projSp p
       let red := "\x1b[31m"
       let white:= "\x1b[0m"
-      IO.println <| red ++ s!"Orbits [{repr O1}] <====> [{repr O2}]" ++ white
+      if verb >6 then
+        IO.println <| red ++ s!"Orbits [{repr O1}] <====> [{repr O2}]" ++ white
+      else pure ()
       let od ← gen_OS_od' p
       for c in od do
         let s1 : Symbol' := Springer.BD'_aux O1 c.1
@@ -79,11 +86,44 @@ unsafe def corrSymbol (m n : ℕ) (select: Option (ℤ × ℤ):= none): IO <| Fi
         if ¬ (select = none ∨ select = some (s1.defect, s2.defect)) then
           continue
         else
-          IO.println s!"{repr s1} ∼ {repr s2}"
-          res := res.insert (s1.defect,s2.defect)
-    let ret := res.toFinset
-    IO.println s!"defect pairs: {repr ret}"
-    return {}
+          if verb >8 then
+            IO.println s!"{repr s1} ∼ {repr s2}"
+          else pure ()
+          AllD:= AllD.insert (s1.defect,s2.defect)
+          AllSpair := AllSpair.insert (s1,s2)
+    let AllD' := AllD.toFinset
+    if verb >4 then
+      IO.println s!"defect pairs: {repr AllD'}"
+    else pure ()
+    return ⟨AllSpair, AllD'⟩
+
+/-
+Type C modification of N by defect
+N ↦ N - d * (d-1)
+-/
+lemma CmodifyN (N : ℕ) (d :ℤ) : ℕ := N - (d*(d-1)).toNat
+
+/-
+Type D modification of N by defect
+N  ↦ N -(d * d -1)
+-/
+lemma DmodifyN (N : ℕ) (d :ℤ) : ℕ := N + 1 - (d*d).toNat
+
+
+/-
+The function test whether the correspondence of sysmbols are independent of defects
+-/
+unsafe def test_eqform (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :ℕ:= 10): IO Unit := do
+  let ⟨APairs,AllD⟩  ← corrSymbol m n (verb:=0)
+  let restD:= AllD.filter (·  ≠ (0,1))
+  for dp in restD.1.unquot do
+    IO.println s!"Test defect pair: {repr dp}"
+    let ⟨subpairs1,_⟩  ← corrSymbol m n (select:= some (0,1)) (verb:=0)
+    let ⟨subpairs2,_⟩ ← corrSymbol (DmodifyN m dp.1) (CmodifyN n dp.2) (select := some (0,1)) (verb:=0)
+    let toReduced := fun x => (toReducedBD x.1, toReducedC x.2)
+    let rpairs1 := List.map
+
+  return ()
 
 
 end test_functions
@@ -92,7 +132,7 @@ end test_functions
 
 section test
 
-#eval corrSymbol 6 8 ((0,1):ℤ × ℤ)
+#eval corrSymbol 6 8 ((0,1):ℤ × ℤ) 5
 
 /-
 #eval corrSymbol 6 8 true

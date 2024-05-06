@@ -1,6 +1,7 @@
 import Mathlib.Data.Finset.Sort
 import Init.Data.Nat.Basic
 import Mathlib.Data.Multiset.Fold
+import Mathlib.Data.Multiset.Basic
 
 open Decidable Multiset
 
@@ -99,6 +100,13 @@ def haspair' [DecidableEq α] (f : α → α) (A: Finset α) : Bool := A.filter 
 lemma haspair'_iff {α} [DecidableEq α] (f : α → α) (A: Finset α) : haspair f A  ↔  haspair' f A = true := by
   sorry
 
+namespace Multiset.Nat
+
+def add_zero (n:ℕ) (S : Multiset ℕ) : Multiset ℕ := Multiset.replicate n 0 + S
+
+end Multiset.Nat
+
+
 lemma Nat.add_inj {a : ℕ} :
   Function.Injective <| fun x : ℕ => x+a := by
   intro _ _ _; aesop
@@ -107,18 +115,18 @@ instance Nat.le.decidable : DecidableRel (· ≤ · : ℕ → ℕ → Prop) := i
 
 
 
-instance MultisetNat.repr : Repr (Multiset ℕ) where
+instance Multiset.Nat.repr : Repr (Multiset ℕ) where
   reprPrec s _ :=
       Std.Format.joinSep (s.sort (· ≤ ·)) ", "
 
-instance FinsetNat.repr : Repr (Finset ℕ) where
+instance Finset.Nat.repr : Repr (Finset ℕ) where
   reprPrec s _ :=
       Std.Format.joinSep (s.sort (· ≤ ·)) ", "
 
-instance FinsetNat.hashable : Hashable (Finset ℕ) where
+instance Finset.Nat.hashable : Hashable (Finset ℕ) where
   hash s := hash <| s.sort (· ≤ ·)
 
-instance MultisetNat.hashable : Hashable (Multiset ℕ) where
+instance Multiset.Nat.hashable : Hashable (Multiset ℕ) where
   hash s := hash <| s.sort (· ≤ ·)
 
 /-Triagle_number is the number of * in the following diagram of (n-1 rows)

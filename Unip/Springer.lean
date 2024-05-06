@@ -19,9 +19,8 @@ import Unip.Auxi
 import Unip.Symbol
 import Unip.Partition
 
-
-
 open Multiset.Nat
+
 
 
 
@@ -41,7 +40,8 @@ The Springer map for type B is definied as follows:
 -/
 
 def to_dSymbolC_aux (p : Partition') : Symbol' :=  by
-  let p' := if (Even <| Multiset.card p) then p else add_zero 1 p
+  let p' := if (Even <| Multiset.card p) then p else
+  add_zero 1 p
   let L : List ℕ := (Multiset.sort (· ≤ ·) p').enum.map (fun x => x.1+x.2)
   let Y := (L.filter (· %2 == 0)).map (· /2)
   let Y' := (L.filter (· %2 == 1)).map (· /2)

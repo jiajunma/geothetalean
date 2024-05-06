@@ -76,7 +76,7 @@ def shift_defectC_aux (d :ℤ) (S : Symbol') : Symbol' :=
     let d' := (-d).toNat
     let A := S.A
     let B := (List.range d' |>.map (fun x => 2*x + 1) |>.toFinset) ∪
-      (Finset.map ⟨(· + 2*(d'-1)), Nat.add_inj⟩ S.B)
+      (Finset.map ⟨(· + (2*d')), Nat.add_inj⟩ S.B)
     ⟨A,B⟩
 
 /-This function shift the defect to d-/
@@ -149,7 +149,7 @@ lemma shift_left_BD_size_lt (S : Symbol') (h : 0∈ S.A ∧ 0∈ S.B) : (shift_l
 
 
 
-def toReducedC (S : Symbol') : Symbol' := if h : (0 ∈ S.A) ∧  (1 ∈ S.Bs then toReducedC (shift_left_C S h)  else S
+def toReducedC (S : Symbol') : Symbol' := if h : (0 ∈ S.A) ∧  (1 ∈ S.B) then toReducedC (shift_left_C S h)  else S
 termination_by S.size
 decreasing_by
   exact shift_left_C_size_lt S h
@@ -164,10 +164,9 @@ decreasing_by
 #eval shift_defectC 3 ⟨{0,3,5},{1,3}⟩
 #eval shift_defectC (-2) ⟨{0,3,5},{1,3}⟩
 
-#eval ⟨{0,3,5},{1,3}⟩ |> toReducedC
-#eval ⟨{0,3,5},{1,3}⟩ |> shift_defectC   (-3:ℤ) |> toReducedC
-#eval ⟨{0,3,5},{1,3}⟩ |> shift_defectC   (-11:ℤ) |> regulate_defectC |> toReducedC
-#eval ⟨{0,3,5},{1,3}⟩ |> shift_defectC  (3:ℤ) |> shift_defectC 1 |> toReducedC
+#eval ⟨{0,3,5,9},{1,3,7}⟩ |> toReducedC
+#eval ⟨{0,3,5,9},{1,3,7}⟩ |> shift_defectC   (-3:ℤ) |> toReducedC
+#eval ⟨{0,3,5,9},{1,3,7}⟩ |> shift_defectC   (-9:ℤ) |> regulate_defectC |> toReducedC
 #eval ⟨{0,3,5},{1,3}⟩ |> toReducedBD
 #eval ⟨{0,3,5},{1,3}⟩ |> regulate_defectBD |> toReducedBD
 #eval ⟨{0,3,5},{1,7}⟩ |> shift_defectBD 3
@@ -257,8 +256,8 @@ def rank (S : SkippingSymbolBD'):= S.toSkippingSymbol'.rank_BD
 def N (S: SkippingSymbolBD') := S.toSkippingSymbol'.N_BD
 
 def shift_right (S : SkippingSymbolBD') : SkippingSymbolBD' where
-  A := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ S.A
-  B := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ S.B
+  A := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj⟩ S.A
+  B := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj⟩  S.B
   non_adjA := sorry
   non_adjB := sorry
 
@@ -266,7 +265,7 @@ def shift_right (S : SkippingSymbolBD') : SkippingSymbolBD' where
 def rank_shift (S : SkippingSymbolBD') :  (shift_right S).rank= S.rank:= by sorry
 
 def defect_shift (S : SkippingSymbolBD') :  (shift_right S).defect = S.defect:= by
-  simp_rw [defect]
+  simp_rw [SkippingSymbol'.defect]
   have h1 : (shift_right S).A.card = 1 + S.A.card := by simp [shift_right,_card_lem]
   have h2 : (shift_right S).B.card = 1 + S.B.card
     := by simp [shift_right,_card_lem]
@@ -455,8 +454,6 @@ structure Bipartition' where
   A : Multiset Nat
   B : Multiset Nat
   deriving BEq, DecidableEq, Hashable
-
-def Multiset.Nat.add_zero (n:ℕ) (S : Multiset ℕ) : Multiset ℕ := Multiset.replicate n 0 + S
 
 open Multiset.Nat
 --#eval add_zero 3 {1,2,3}
