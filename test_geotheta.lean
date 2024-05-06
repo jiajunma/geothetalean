@@ -11,6 +11,8 @@ def getstr (args : List String) (i : ℕ) : String :=
   | none => ""
   | some s => s
 
+
+
 unsafe def main (args: List String) : IO UInt32 := do
   let n : Nat := getnm args 0
   let m : Nat := getnm args 1

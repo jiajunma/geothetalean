@@ -99,8 +99,8 @@ def haspair' [DecidableEq α] (f : α → α) (A: Finset α) : Bool := A.filter 
 lemma haspair'_iff {α} [DecidableEq α] (f : α → α) (A: Finset α) : haspair f A  ↔  haspair' f A = true := by
   sorry
 
-lemma Nat.add_inj (a : ℕ) :
-  Function.Injective <| fun x : ℕ => x+n := by
+lemma Nat.add_inj {a : ℕ} :
+  Function.Injective <| fun x : ℕ => x+a := by
   intro _ _ _; aesop
 
 instance Nat.le.decidable : DecidableRel (· ≤ · : ℕ → ℕ → Prop) := inferInstance
@@ -131,8 +131,8 @@ instance MultisetNat.hashable : Hashable (Multiset ℕ) where
 def triangle_number (n : ℕ) : ℕ := n * (n - 1) / 2
 
 
-def _card_lem (A : Finset ℕ) : ({0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ A).card = 1 + A.card  := by calc
-      _ = ({0}:Finset ℕ).card + (Finset.map ⟨(· + 2), Nat.add_inj 2⟩ A).card
+def _card_lem (A : Finset ℕ) : ({0} ∪ Finset.map ⟨(· + 2), Nat.add_inj⟩ A).card = 1 + A.card  := by calc
+      _ = ({0}:Finset ℕ).card + (Finset.map ⟨(· + 2), Nat.add_inj⟩ A).card
       := by simp [Finset.card_union_of_disjoint]
       _ = _ := by simp
 

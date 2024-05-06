@@ -56,8 +56,10 @@ unsafe def defectPairs (m n : ℕ) : IO <| Finset (ℤ × ℤ) := do
       ))
 -/
 
-
-unsafe def corrSymbol (m n : ℕ) (prin : Bool := false): IO <| Finset (ℤ × ℤ) := do
+/-
+The program can select the defect pairs of the dual pair O(m)-Sp(n) and print them out.
+-/
+unsafe def corrSymbol (m n : ℕ) (select: Option (ℤ × ℤ):= none): IO <| Finset (ℤ × ℤ) := do
   if n % 2 = 1 then pure {}
   else
     let AllOS := AllOrthoSymplectic_relevent m n
@@ -74,7 +76,7 @@ unsafe def corrSymbol (m n : ℕ) (prin : Bool := false): IO <| Finset (ℤ × �
       for c in od do
         let s1 : Symbol' := Springer.BD'_aux O1 c.1
         let s2 : Symbol' := Springer.C'_aux O2 c.2
-        if prin ∧ s2.defect - s1.defect != 1 then
+        if ¬ (select = none ∨ select = some (s1.defect, s2.defect)) then
           continue
         else
           IO.println s!"{repr s1} ∼ {repr s2}"
@@ -89,6 +91,8 @@ end test_functions
 
 
 section test
+
+#eval corrSymbol 6 8 ((0,1):ℤ × ℤ)
 
 /-
 #eval corrSymbol 6 8 true

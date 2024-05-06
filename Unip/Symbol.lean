@@ -39,13 +39,140 @@ structure Symbol' where
   deriving Inhabited, BEq, DecidableEq, Hashable
 
 namespace Symbol'
-def defect (S : Symbol') : ℤ :=  S.A.card - S.B.card
 
-end Symbol'
+def size (S : Symbol') : ℕ := S.A.card + S.B.card
+
+instance coeSymbol' : Coe (Finset ℕ × Finset ℕ) Symbol' where
+  coe := fun ⟨A,B⟩ => ⟨A,B⟩
+
 
 instance  Symbol'.reprSymbol' : Repr Symbol' where
   reprPrec s _ :=
       Std.Format.join ["(", repr s.A.1, ";", repr s.B.1, ")"]
+
+def defect (S : Symbol') : ℤ :=  S.A.card - S.B.card
+
+/-
+Let Ψ_{2n,d} is a Skipping symbol of type C and has N=2n and defect d (odd).
+There is a bijection
+Ψ_{2n,d} → Ψ_{2n+d(d-1),d} (with d odd)
+For d ≥ 1, the map is given by
+(A,B) ↦ ({0,2,4,...,2d-4} ∪ (A+2d-2), B)
+For d ≤ -1
+(A,B) ↦ ( A, {1, 3, 5, ... , 1-2d} ∪ B).
+-/
+/-
+This function shift the defect by d
+We only use the case where By assumption d should be odd)
+-/
+def shift_defectC_aux (d :ℤ) (S : Symbol') : Symbol' :=
+  if h: d ≥ 0 then
+    let d' := d.toNat
+    let A := (List.range d' |>.map (· * 2) |>.toFinset) ∪
+              (Finset.map ⟨(· + 2*d'), Nat.add_inj⟩ S.A)
+    let B := S.B
+    ⟨A,B⟩
+  else
+    let d' := (-d).toNat
+    let A := S.A
+    let B := (List.range d' |>.map (fun x => 2*x + 1) |>.toFinset) ∪
+      (Finset.map ⟨(· + 2*(d'-1)), Nat.add_inj⟩ S.B)
+    ⟨A,B⟩
+
+/-This function shift the defect to d-/
+def shift_defectC (d : ℤ) (S : Symbol')  : Symbol' :=
+  shift_defectC_aux (d - S.defect) S
+
+
+def regulate_defectC (S : Symbol') : Symbol' :=
+  shift_defectC 1 S
+
+/-
+This function shift the defect by d
+-/
+def shift_defectBD_aux (d : ℤ) (S : Symbol')  : Symbol' :=
+  if d ≥ 0 then
+    let d' := d.toNat
+    let A := (List.range d' |>.map (· * 2) |>.toFinset) ∪
+              (Finset.map ⟨(· + 2*d'), Nat.add_inj⟩ S.A)
+    let B := S.B
+    ⟨A,B⟩
+  else
+    let d' := (-d).toNat
+    let A := S.A
+    let B := (List.range (d') |>.map (· * 2) |>.toFinset) ∪
+      (Finset.map ⟨(· + 2*d'), Nat.add_inj⟩ S.B)
+    ⟨A,B⟩
+
+/-
+This function shift the defect to d
+-/
+def shift_defectBD (d : ℤ) (S : Symbol')  : Symbol' :=
+  let d0 := S.defect
+  shift_defectBD_aux (d-d0) S
+
+def regulate_defectBD (S : Symbol') : Symbol' :=
+  let d := S.defect
+  if d%2 = 0 then
+    shift_defectBD 0 S
+  else
+    shift_defectBD 1 S
+
+
+def shift_left_C (S : Symbol') (h : 0∈ S.A ∧ 1∈ S.B) : Symbol' where
+  A := Finset.image (· - 2) (S.A.erase 0)
+  B := Finset.image (· - 2) (S.B.erase 1)
+
+
+def shift_left_BD (S : Symbol') (h : 0∈ S.A ∧ 0∈ S.B) : Symbol' where
+  A := Finset.image (· - 2) (S.A.erase 0)
+  B := Finset.image (· - 2) (S.B.erase 0)
+
+
+
+lemma shift_left_C_size_lt (S : Symbol') (h : 0∈ S.A ∧ 1∈ S.B) : (shift_left_C S h).size < S.size := by
+  simp_rw [size,shift_left_C]
+  have : (Finset.image (· -2) (S.A.erase 0) |>.card) ≤ (S.A.erase 0).card := Finset.card_image_le
+  have : (Finset.image (· -2) (S.B.erase 1) |>.card) ≤ (S.B.erase 1).card := Finset.card_image_le
+  have : (S.A.erase 0).card < S.A.card:= Finset.card_erase_lt_of_mem h.1
+  have : (S.B.erase 1).card < S.B.card:= Finset.card_erase_lt_of_mem h.2
+  linarith
+
+lemma shift_left_BD_size_lt (S : Symbol') (h : 0∈ S.A ∧ 0∈ S.B) : (shift_left_BD S h).size < S.size := by
+  simp_rw [size,shift_left_BD]
+  have : (Finset.image (· -2) (S.A.erase 0) |>.card) ≤ (S.A.erase 0).card := Finset.card_image_le
+  have : (Finset.image (· -2) (S.B.erase 0) |>.card) ≤ (S.B.erase 0).card := Finset.card_image_le
+  have : (S.A.erase 0).card < S.A.card:= Finset.card_erase_lt_of_mem h.1
+  have : (S.B.erase 0).card < S.B.card:= Finset.card_erase_lt_of_mem h.2
+  linarith
+
+
+
+
+def toReducedC (S : Symbol') : Symbol' := if h : (0 ∈ S.A) ∧  (1 ∈ S.Bs then toReducedC (shift_left_C S h)  else S
+termination_by S.size
+decreasing_by
+  exact shift_left_C_size_lt S h
+
+def toReducedBD (S : Symbol') : Symbol' := if h : 0 ∈ S.A ∧  0 ∈ S.B then toReducedBD (shift_left_BD S h)  else S
+termination_by S.size
+decreasing_by
+  exact shift_left_BD_size_lt S h
+
+
+
+#eval shift_defectC 3 ⟨{0,3,5},{1,3}⟩
+#eval shift_defectC (-2) ⟨{0,3,5},{1,3}⟩
+
+#eval ⟨{0,3,5},{1,3}⟩ |> toReducedC
+#eval ⟨{0,3,5},{1,3}⟩ |> shift_defectC   (-3:ℤ) |> toReducedC
+#eval ⟨{0,3,5},{1,3}⟩ |> shift_defectC   (-11:ℤ) |> regulate_defectC |> toReducedC
+#eval ⟨{0,3,5},{1,3}⟩ |> shift_defectC  (3:ℤ) |> shift_defectC 1 |> toReducedC
+#eval ⟨{0,3,5},{1,3}⟩ |> toReducedBD
+#eval ⟨{0,3,5},{1,3}⟩ |> regulate_defectBD |> toReducedBD
+#eval ⟨{0,3,5},{1,7}⟩ |> shift_defectBD 3
+#eval ⟨{0,3,5},{1,3}⟩ |> shift_defectBD (11) |> regulate_defectBD |> toReducedBD
+
 
 /-
 A Skipping Symbol of type BD is a Symbol of type C such that
@@ -248,8 +375,8 @@ instance  reprSkippingSymbolC' : Repr SkippingSymbolC' where
 def rank (S : SkippingSymbolC'):=  S.toSkippingSymbol'.rank_C
 
 def shift_right (S : SkippingSymbolC') : SkippingSymbolC' where
-  A := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ S.A
-  B := {1} ∪ Finset.map ⟨(· + 2), Nat.add_inj 2⟩ S.B
+  A := {0} ∪ Finset.map ⟨(· + 2), Nat.add_inj⟩ S.A
+  B := {1} ∪ Finset.map ⟨(· + 2), Nat.add_inj⟩ S.B
   non_adjA := sorry
   non_adjB := sorry
   cardodd := sorry
