@@ -114,13 +114,15 @@ def CmodifyN (N : ℕ) (d :ℤ) : ℕ := N - (d*(d-1)).toNat
 Type D modification of N by defect
 N  ↦ N -(d * d -1)
 -/
-def DmodifyN (N : ℕ) (d :ℤ) : ℕ := N  - (d*d).toNat
+def DmodifyN (N : ℕ) (d :ℤ) : ℕ :=
+  if N %2 = 0 then  N  - (d*d).toNat else N + 1 - (d*d).toNat
 
 
 /-
 The function test whether the correspondence of sysmbols are independent of defects
 -/
-unsafe def test_eqform (m n : ℕ) (select: Option (ℤ × ℤ):= none) (verb :ℕ:= 10): IO Unit := do
+unsafe def test_eqform (m n : ℕ) -- (select: Option (ℤ × ℤ):= none) (verb :ℕ:= 10)
+: IO Unit := do
   let ⟨APairs,AllD⟩  ← corrSymbol m n (verb:=0)
   let restD:= AllD.filter (·  ≠ ((m:ℤ)%2,1))
   IO.println s!"Consider the dual pair: O({m})-Sp({n})"

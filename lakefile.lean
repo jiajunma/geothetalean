@@ -17,3 +17,4 @@ lean_lib «Unip» where
   -- add any library configuration options here
 
 lean_exe test_geotheta
+lean_exe test_task
