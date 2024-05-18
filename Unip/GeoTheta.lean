@@ -90,11 +90,13 @@ IO <| List (Symbol' × Symbol') × Finset (ℤ × ℤ)
       for c in od do
         let s1 : Symbol' := Springer.BD'_aux O1 c.1
         let s2 : Symbol' := Springer.C'_aux O2 c.2
+        let p1 := s1.BDSymbol_toBP.remove_zero
+        let p2 := s2.CSymbol_toBP.remove_zero
         if ¬ (select = none ∨ select = some (s1.defect, s2.defect)) then
           continue
         else
           if verb >8 then
-            IO.println s!"{repr s1} ∼ {repr s2}"
+            IO.println s!"size pair ({repr p1.size},{repr p2.size}) \t {repr p1} ∼ {repr p2} "
           else pure ()
           AllD:= AllD.insert (s1.defect,s2.defect)
           AllSpair := AllSpair.insert (s1,s2)

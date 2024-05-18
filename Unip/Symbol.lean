@@ -44,6 +44,8 @@ def remove_zero (S : Bipartition') : Bipartition' := by
   let pos := fun A : Multiset ℕ => A.filter (0 < ·)
   exact ⟨pos S.A, pos S.B⟩
 
+def size (S : Bipartition') := S.A.sum + S.B.sum
+
 end Bipartition'
 
 

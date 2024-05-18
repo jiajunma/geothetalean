@@ -236,6 +236,18 @@ def checkSpringerC (p : Partition') (c : Finset ℕ) :=
     --IO.println s!" ssymbol {repr <| Springer.dist.C_aux p}"
     IO.println s!" interval {repr <|interval.C p}"
 
+
+def checkSpringerBD (p : Partition') (c : Finset ℕ) :=
+  match Springer.BD'' p c with
+  | none => IO.println "The partition is not of type BD"
+  | some s => do
+    let ss :Symbol':= s.toReduced.toSymbol'
+    let BP := ss.BDSymbol_toBP
+    IO.println s!"Local system [{repr p} |{repr c}] =>  SSymbol {repr s} ==> BP {repr BP}"
+    --IO.println s!" ssymbol {repr <| Springer.dist.C_aux p}"
+    IO.println s!" interval {repr <|interval.BD p}"
+
+
 #eval checkSpringerC {0,0,1,1,4} {4}
 #eval checkSpringerC {1,1,4} {}
 #eval checkSpringerC {2,2,2} {2}
@@ -245,5 +257,8 @@ def checkSpringerC (p : Partition') (c : Finset ℕ) :=
 #eval checkSpringerC {1,1,1,1,2} {2}
 #eval checkSpringerC {1,1,1,1,2} {}
 #eval checkSpringerC {1,1,1,1,1,1} {}
+
+#eval checkSpringerBD {1,1,1,1,1,1} {}
+#eval checkSpringerC {2,2,4} {2,4}
 
 end test
