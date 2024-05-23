@@ -195,23 +195,36 @@ def remove_zero (A : Multiset ℕ) : Multiset ℕ := A.filter (0 ≠ ·)
 
 /-
 This function treats the Type C. One can see that
-the algorithm is independent of defect.
+the algorithm is independent of the sign of the defect.
+But note that if the defect is negative, one should switch the partition!
+See, Remark 5.8, in  Shoji, (1997). Unipotent Characters of Finite Classical Groups, Finite Reductive Groups-Related Structures and Representations.
 -/
 def CSymbol_toBP (S : Symbol') : Bipartition' := by
   have ⟨A',B'⟩ := S
   let A := List.zip (A'.sort (· ≤ ·)) (List.range A'.card) |>.map (fun x => x.1 - 2*x.2)
   let B := List.zip (B'.sort (· ≤ ·)) (List.range B'.card) |>.map (fun x => x.1 - 2*x.2-1)
+  /-
+  if S.defect >0 then
+    exact ⟨A,B⟩
+  else
+    -- If defect <0, then switch left and right partitions
+    exact ⟨B,A⟩
+  -/
   exact ⟨A,B⟩
 
 /-
 This function treats the Type BD defect 0, 1 case
 -/
 def BDSymbol_toBP (S : Symbol') : Bipartition' := by
-  let S':= shift_defectBD 0 S
+  --let S':= shift_defectBD 0 S
   have ⟨A',B'⟩ := S
   let A := List.zip (A'.sort (· ≤ ·)) (List.range A'.card) |>.map (fun x => x.1 - 2*x.2)
   let B := List.zip (B'.sort (· ≤ ·)) (List.range B'.card) |>.map (fun x => x.1 - 2*x.2)
   exact ⟨A,B⟩
+  --if S.defect <  0 then
+  --  exact ⟨A,B⟩
+  --else
+  --exact ⟨B,A⟩
 
 
 #eval ⟨{0,3,5,7}, {1, 4,5}⟩ |> shift_defectC 4 |> CSymbol_toBP |>.remove_zero
@@ -515,6 +528,7 @@ def upto_zero (S1 S2 : Bipartition') : Prop :=
   pos S1.A = pos S2.A ∧ pos S1.B = pos S2.B
 
 
+def swap : Bipartition'→ Bipartition':= fun x => {A:=x.B,B:=x.A}
 
 def to_ssymbol_aux (init : ℕ) (S : List ℕ) : List ℕ
 := S.enum.map (fun (i, x) => x + i * 2 + init)

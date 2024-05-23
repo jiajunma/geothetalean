@@ -46,9 +46,8 @@ unsafe def test_evenodd (m n : ℕ) : IO Unit := do
   let ⟨APairsO,AllD⟩  ← corrSymbol (m+1) n (verb:=0)
   let Epairs := APairsE |>.filter (fun x => (x.1.defect, x.2.defect) = (0,1))
   let Opairs := APairsO |>.filter (fun x => (x.1.defect, x.2.defect) = (1,1))
-  let swap : Bipartition'→ Bipartition':= fun x => {A:=x.B,B:=x.A}
   let toRepnES := fun x : Symbol'×Symbol' => (x.1.BDSymbol_toBP.remove_zero, x.2.CSymbol_toBP.remove_zero)
-  let toRepnOS := fun x : Symbol'×Symbol' => (x.1.BDSymbol_toBP.remove_zero , x.2.CSymbol_toBP.remove_zero |> swap)
+  let toRepnOS := fun x : Symbol'×Symbol' => (x.1.BDSymbol_toBP.remove_zero , x.2.CSymbol_toBP.remove_zero |> Bipartition'.swap)
 
   IO.println <| String.replicate (40) '-'
   let rpairs1 := List.map toRepnES Epairs |>.toFinset
