@@ -196,8 +196,13 @@ def remove_zero (A : Multiset ℕ) : Multiset ℕ := A.filter (0 ≠ ·)
 /-
 This function treats the Type C. One can see that
 the algorithm is independent of the sign of the defect.
-But note that if the defect is negative, one should switch the partition!
+
+
+But Shoji claim s that if the defect is negative, one should switch the partition!
 See, Remark 5.8, in  Shoji, (1997). Unipotent Characters of Finite Classical Groups, Finite Reductive Groups-Related Structures and Representations.
+
+From theta's perspective, this is not a good choice.
+We adopt Lusztig's normalization.
 -/
 def CSymbol_toBP (S : Symbol') : Bipartition' := by
   have ⟨A',B'⟩ := S
