@@ -167,7 +167,10 @@ lemma shift_left_BD_size_lt (S : Symbol') (h : 0∈ S.A ∧ 0∈ S.B) : (shift_l
 
 
 
-def toReducedC (S : Symbol') : Symbol' := if h : (0 ∈ S.A) ∧  (1 ∈ S.B) then toReducedC (shift_left_C S h)  else S
+def toReducedC (S : Symbol') : Symbol'
+:= if h : (0 ∈ S.A) ∧  (1 ∈ S.B)
+  then toReducedC (shift_left_C S h)
+  else S
 termination_by S.size
 decreasing_by
   exact shift_left_C_size_lt S h
@@ -366,7 +369,8 @@ lemma shift_left_size_le (S : SkippingSymbolBD') (h : 0∈ S.A ∧ 0∈ S.B) : (
   sorry
 
 
-def toReduced (S : SkippingSymbolBD') : SkippingSymbolBD' := if h : 0 ∈ S.A ∧  0 ∈ S.B
+def toReduced (S : SkippingSymbolBD') : SkippingSymbolBD'
+:= if h : 0 ∈ S.A ∧  0 ∈ S.B
   then toReduced (shift_left S h)
   else S
 termination_by S.size

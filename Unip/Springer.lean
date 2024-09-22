@@ -264,8 +264,21 @@ def checkSpringerBD (p : Partition') (c : Finset ℕ) :=
 #eval checkSpringerC {1,1,1,1,2} {}
 #eval checkSpringerC {1,1,1,1,1,1} {}
 
+
+
 #eval checkSpringerBD {5,3,1} {5,3,1}
+
+
+
+
+
+
 #eval checkSpringerBD {5,3,1} {1}
+
+
+
+
+
 
 #eval checkSpringerBD {1,1,1,1,1,1} {1}
 #eval checkSpringerC {2,2,4} {2,4}
