@@ -439,9 +439,125 @@ def GenUnipMpM (n : ℕ) : IO (List Nil) := do
 
 section Padic
 
+
+def QSpaceP := Witt × Witt × ℤ
+
+instance : Repr QSpaceP where
+  reprPrec := fun qs prec =>
+    match qs with
+    -- The zero space
+    | ⟨Witt.zero,Witt.zero, 0⟩ => s!"Z"
+    | ⟨Witt.zero,Witt.zero, n⟩ => s!"H^{n}"
+    | ⟨W, n⟩ =>
+      match n with
+      | 0 => s!"{repr W}"
+      | n => s!"{repr W} ⊕ H^{n}"
+
+
+instance QSpaceP.inhabited : Inhabited QSpaceP where
+  default := ⟨Witt.zero,Witt.zero,0⟩
+
+
 /-
 The quadratic space over p-adic group is
 -/
+abbrev qspacep_sum :QSpaceP -> QSpaceP -> QSpaceP := fun ⟨V0,V1,n⟩  ⟨W0,W1,m⟩  =>
+   ⟨(V0+W0),(V1+W1),(n+m + Witt.drank V0 W0 + Witt.drank V1 W1)⟩
+
+instance QSpaceP.hAdd : HAdd QSpaceP QSpaceP QSpaceP where
+  hAdd := qspacep_sum
+
+instance QSpaceP.Monoid: CommMonoid QSpaceP where
+  mul := qspacep_sum
+  mul_assoc := sorry
+  one := ⟨Witt.zero,Witt.zero,0⟩
+  one_mul := sorry
+  mul_one := sorry
+  mul_comm := sorry
+
+
+instance QSpaceP.Group : CommGroup QSpaceP where
+  mul_comm := QSpaceP.Monoid.mul_comm
+  inv := fun ⟨V0,V1,n⟩  => ⟨-V0,-V1,(- n - V0.dim - V1.dim)⟩
+  mul_left_inv := sorry
+
+def QSpaceP.op : QSpaceP → QSpaceP := fun ⟨V0,V1,n⟩ => ⟨-V0,-V1,n⟩
+
+
+def QSpaceP.dim : QSpaceP → ℤ := fun ⟨V0,V1,n⟩ => V0.dim + V1.dim + 2*n
+
+
+instance QSpaceP.hNeg: Neg QSpaceP where
+  neg := QSpaceP.Group.inv
+
+instance QSpaceP.hSub: HSub QSpaceP QSpaceP QSpaceP where
+  hSub := fun a b => a + (-b)
+
+
+abbrev NilP := List (QSpaceP×ℕ)
+
+/-
+Regularize nilpotent oribt
+-/
+def NilP.reg (N : NilP) : NilP :=
+  let nonZero := N.filter (fun (_, n) => n ≠ 0)
+  let sorted := List.insertionSort (fun (_, n1) (_, n2) => n1 ≥ n2) nonZero
+  let grouped := sorted.groupBy (fun (_, n1) (_, n2) => n1 == n2)
+  let merged := grouped.map (fun group =>
+    let n := (group.head!).2  -- Get the n value from the first element
+    let mergedQSpace := group.foldl (fun acc (qs, _) => acc + qs) ⟨Witt.zero,Witt.zero,0⟩
+    (mergedQSpace, n))
+  merged.filter (fun (qs, _) => qs.dim ≠ 0)
+
+
+def QSpaceP.jordanspace (R : QSpaceP) (n : ℕ) : QSpaceP:=
+  match n with
+  | 0 => ⟨Witt.zero,Witt.zero,0⟩
+  | n+1 => R + QSpaceP.jordanspace R.op n
+
+#eval jordanspace ⟨Witt.quad,0⟩ 17 |>.dim
+#eval (jordanspace ⟨Witt.quad,1⟩ 17).dim
+
+def NilP.space (N : NilP) : QSpaceP :=
+  let jordanSpaces := N.map (fun (qs, n) => QSpaceP.jordanspace qs n)
+  jordanSpaces.foldl (fun acc js => acc + js) ⟨Witt.zero,Witt.zero, 0⟩
+
+def NilP.dim (N : NilP) := N.space.dim
+
+
+def liftNilP (N : NilP) (Q : QSpaceP) : NilP :=
+  match N with
+  | [] => [(Q,1)]
+  | (R,r)::N => (R.op,r+1)::liftNilP N (Q - QSpaceP.jordanspace R.op (r+1))
+
+/-
+The unipotent reprenentation of p-adic group
+-/
+def UnipP := UnipF × UnipF
+
+def UnipP.descentSSeq (U : UnipP) : List QSpaceP :=
+  let L1 := List.map UnipF.space $ UnipF.descentSeq U.1
+  let L2 := List.map UnipF.space $ UnipF.descentSeq U.2
+  let f : Option QSpace → Option QSpace → QSpaceP :=
+    fun a b => match a,b with
+    | none,none => ⟨Witt.zero,Witt.zero,0⟩
+    | none,some b => ⟨Witt.zero,b.1,b.2⟩
+    | some a,none => ⟨a.1,Witt.zero,a.2⟩
+    | some a, some b=> ⟨a.1,b.1,a.2+b.2⟩
+  List.zipWithAll f L1 L2
+
+
+def computeNilP : List QSpaceP → List NilP := fun L =>
+match L with
+| [] => []
+| [x] => [(NilP.reg [(x,1)])]
+| x :: y :: xs =>
+    let tail_seq := computeNilP (y :: xs)
+    let head_nil := (liftNilP tail_seq.head! x).reg
+    head_nil :: tail_seq
+
+
+#eval computeNilP $ UnipP.descentSSeq ⟨UnipF.Oodd 8 0, UnipF.Oodd 3 0⟩
 
 end Padic
 
