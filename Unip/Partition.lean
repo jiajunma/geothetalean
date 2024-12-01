@@ -502,7 +502,241 @@ def gen_OS_od' (p : Multiset (ℕ × ℕ)) : IO <| List (Finset ℕ × Finset �
                      (List.sublists (C2.filter (· ∉ D))))
 
 
+
+
 end generator
+
+section Order
+
+def regPart (p : List ℕ ) :=
+  (p.filter (· ≠ 0)).insertionSort (· ≥ ·)
+
+def cumSum_aux (s : ℕ) (l: List ℕ) : List ℕ:=
+  match l with
+  | h::t => (h+s) :: (cumSum_aux (h+s) t)
+  | nil => nil
+
+def cumSum (l : List ℕ) := cumSum_aux 0 l
+
+#eval cumSum [1,2,3]
+
+/-
+The partition p1 is smaller than p2
+if the p2 is larger than p1 in the laxical order
+-/
+def part_le (p1 p2 : List ℕ) : Bool :=
+  let c1 := cumSum $ regPart p1
+  let c2 := cumSum $ regPart p2
+  List.zip c1 c2 |>.all (fun (x : ℕ ×ℕ)  => x.1 ≤ x.2)
+
+def part_lt (p1 p2 : List ℕ) : Bool :=
+  let p1 := regPart p1
+  let p2 := regPart p2
+  p1 ≠ p2 ∧ part_le p1 p2
+
+
+#eval part_le [5,4,1] [6,3,0,1]
+#eval part_le  [3,3] [4,2]
+
+
+open List
+
+
+/-- Compute the transpose of a partition -/
+def Ptranspose (p : List ℕ) : List ℕ :=
+  match p.maximum?  with
+  | none => []
+  | some n =>
+    List.range n |>.map (fun i => p.countP (i < ·))
+
+#eval Ptranspose [4,3,1]
+#eval transpose [4,3,1]
+
+/-
+For partition of even, it is special if its transpose is type C
+For partition of odd, it is special if its transpose is type B
+-/
+def isSpecial (p : List ℕ) :=
+  match p.sum %2 with
+  | 0 => isTypeC  $ Ptranspose p
+  | _ => isTypeBD $ Ptranspose p
+
+#eval isSpecial [6,6,5,1]
+#eval isSpecial [6,5,5,4]
+
+
+
+def List.range_rev (n : ℕ) : List ℕ :=
+  List.range n |>.map (n-1 - ·)
+
+/-
+Note that all parts should has length less than or equal m
+-/
+def List.gen_parts (n : ℕ ) (m : ℕ) : List (List ℕ ) :=
+  match n with
+  | 0 => [[]]
+  -- In the generation, we prefer to generate the larger orbit first
+  | n'+1 => List.range_rev (min (n'+1) m) >>= (fun i =>
+    ((List.gen_parts (n'-i) (i+1)).map (fun l => (i+1):: l)))
+termination_by n
+
+#eval List.gen_parts 6 2
+
+/- Given a partition generate all partitions
+  less then the given partition
+  we assume P is sorted
+  m : is the maximal size of the row
+  a : is the number of additional boxes have to add
+    need to be added by the previous step
+-/
+def gen_smaller_aux (P : List ℕ) (m a : ℕ) : List (List ℕ) :=
+  let arg_x : ℕ → List (List ℕ)  → List (List ℕ):=
+    fun x L => L.map (x :: ·)
+  match m with
+  | 0 => match P.sum + a with
+    | 0 => [[]]
+    | _ => []
+  | _ =>
+    match P with
+    -- In the generation, we prefer to generate the larger orbit first
+    | x :: tail => List.range_rev (min m (x+a)) >>=
+      fun r => (arg_x (r+1) $ gen_smaller_aux tail (r+1) (a + x - (r+1)))
+    | [] => List.gen_parts a m
+
+#eval gen_smaller_aux [5,4] 3 0
+
+
+def gen_smaller (P : List ℕ) : List (List ℕ) :=
+  match P with
+  | nil =>  []
+  | _ => gen_smaller_aux P P.head! 0
+
+
+def gen_smaller_BD (P : List ℕ) : List (List ℕ) :=
+  let L := gen_smaller P
+  L.filter (isTypeBD ·)
+
+
+def gen_smaller_C (P : List ℕ) : List (List ℕ) :=
+  let L := gen_smaller P
+  L.filter (isTypeC ·)
+
+
+
+/-
+  Spaltenstein dual is the map for Nil_⋆ → Nil_⋆
+  where ⋆ = B, C, D
+-/
+
+/-
+We assume p is reversely sorted
+The result will be wrong if p.sum is non_even
+-/
+def collapseC_aux (p:List ℕ) :=
+  match p.sum %2 with
+  | 1 => []
+  | _ =>
+    match p with
+    | x :: y :: tail =>
+      if x = y then
+        x :: y :: (collapseC_aux tail)
+      else
+        if x % 2 = 0 then
+          x :: (collapseC_aux (y::tail))
+        else
+          (x - 1) :: (collapseC_aux ((y+1)::tail))
+    | [x] =>
+      if x % 2 = 0 then
+        [x]
+      else
+        [x - 1, 1]
+    | nil => nil
+termination_by p.length
+
+
+def collapseC (p:List ℕ ):=
+  collapseC_aux $ regPart p
+
+
+def collapseBD_aux (p:List ℕ) :=
+    match p with
+    | x :: y :: tail =>
+      if x = y then
+        x :: y :: collapseBD_aux tail
+      else
+        if x % 2 = 1 then
+          x :: (collapseBD_aux (y::tail))
+        else
+          (x - 1) :: (collapseBD_aux ((y+1)::tail))
+    | [x] =>
+      if x % 2 = 1 then
+        [x]
+      else
+        [x - 1, 1]
+    | nil => nil
+termination_by p.length
+
+
+def collapseBD (p:List ℕ ):=
+  collapseBD_aux $ regPart p
+
+#eval collapseC [0,6,5,5,4,4,4,2]
+#eval collapseBD [4,5,5,4,4,0,4,2,0]
+
+
+
+
+def dLS_C (p:List ℕ) := collapseC $ Ptranspose p
+
+def dLS_BD (p:List ℕ) := collapseBD $ Ptranspose p
+
+
+/-
+  The special piece is the fiber of the duality map
+-/
+def specailPiece_C (p : List ℕ) :=
+  let p := regPart p
+  let dp := dLS_C p
+  let Lsub := gen_smaller_C p
+  Lsub.filter (dp = dLS_C ·)
+
+def specailPiece_BD (p : List ℕ) :=
+  let p := regPart p
+  let dp := (dLS_BD p)
+  let Lsub := gen_smaller_BD p
+  Lsub.filter (fun a => dp = (dLS_BD a))
+
+
+#eval dLS_BD [5,3,1]
+#eval dLS_BD [4,4,1]
+--#eval gen_smaller [5,3,1]
+#eval gen_smaller_BD [5,3,1]
+
+#eval specailPiece_BD [9,7,5,5,1]
+#eval specailPiece_BD [3,3,1]
+#eval specailPiece_BD [5,3,1]
+
+#eval specailPiece_C [6,4,4,2]
+#eval specailPiece_BD [5,3,3,2,2]
+
+#eval specailPiece_BD [7,5,3,1]
+
+#eval  dLS_C [5,2,1]
+
+#eval gen_smaller_BD [6,4,4,2]
+
+#eval gen_smaller_C [5,3]
+
+
+#eval gen_smaller [5,4]
+
+
+
+
+end Order
+
+
+
 
 
 section test

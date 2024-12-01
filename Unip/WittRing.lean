@@ -444,14 +444,16 @@ def QSpaceP := Witt × Witt × ℤ
 
 instance : Repr QSpaceP where
   reprPrec := fun qs prec =>
+    let H := match qs.2.2 with
+      | 0 => ""
+      | n => s!"⊕ H^{n}"
     match qs with
     -- The zero space
     | ⟨Witt.zero,Witt.zero, 0⟩ => s!"Z"
     | ⟨Witt.zero,Witt.zero, n⟩ => s!"H^{n}"
-    | ⟨W, n⟩ =>
-      match n with
-      | 0 => s!"{repr W}"
-      | n => s!"{repr W} ⊕ H^{n}"
+    | ⟨W1,Witt.zero,_⟩ => s!"{repr W1}" ++ H
+    | ⟨Witt.zero,W2,_⟩ => s!"π{repr W2}" ++ H
+    | ⟨W1,W2,n⟩ => s!"{repr W1} ⊕ π{repr W2}" ++ H
 
 
 instance QSpaceP.inhabited : Inhabited QSpaceP where
