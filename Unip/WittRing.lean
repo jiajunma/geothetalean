@@ -431,7 +431,8 @@ def GenUnipMpM (n : ℕ) : IO (List Nil) := do
     IO.println s!"Mp({Q2.dim}):\t{repr N2}"
     N0 := N2
     res := N2::N1::res
-   pure res
+   pure []
+   --pure res
 
 
 #eval GenUnipMpM 7
@@ -559,10 +560,17 @@ match L with
     head_nil :: tail_seq
 
 
-#eval computeNilP $ UnipP.descentSSeq ⟨UnipF.Oodd 8 0, UnipF.Oodd 3 0⟩
+#eval computeNilP $ UnipP.descentSSeq ⟨UnipF.Oodd 5 0, UnipF.Oodd 3 0⟩
+
+#eval computeNilP $ UnipP.descentSSeq ⟨UnipF.Sp 1, UnipF.Sp 1⟩
+
 
 end Padic
 
-
-
 end QuadraticSpace
+
+
+section test
+
+
+end test
